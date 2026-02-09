@@ -1,0 +1,6 @@
+CompileFlags:
+    Add:
+        - "-I/home/benji/Dokumente/Programme/tame/build/_deps/r3d-src/include/"
+        - "-I/home/benji/Dokumente/Programme/tame/src/include"
+        - "-pedantic"
+        - "-Wall"

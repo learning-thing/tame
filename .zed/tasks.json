@@ -1,0 +1,17 @@
+[
+	{
+		"label": "Build and run Cmake",
+		"command": "cmake -B build -G \"Ninja\" && cd build && ninja -j 8 && ./tame",
+		//"env": { "foo": "bar" },
+		"use_new_terminal": false,
+		"allow_concurrent_runs": false,
+		"reveal": "always",
+		"reveal_target": "dock",
+		"hide": "on_success",
+		"shell": { "program": "zsh" },
+		// Whether to show the task line in the output of the spawned task, defaults to `true`.
+		"show_summary": true,
+		// Whether to show the command line in the output of the spawned task, defaults to `true`.
+		"show_command": true,
+	},
+]

@@ -1,44 +1,20 @@
-#include "player.hpp"
-#include "convars.hpp"
+#include <cstdio>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/geometric.hpp>
 #include <raylib.h>
 #include <raymath.h>
-
-void operator+=(Vector3& a, const vec3 &b) {
-	a.x+=b.x;
-	a.y+=b.y;
-	a.z+=b.z;
-}
-
-Vector3 operator+(Vector3& a, vec3 &b) {
-	return {a.x+b.x, a.y+b.y, a.z+b.z};
-}
-
-Vector3 operator+(vec3& a, Vector3 &b) {
-	return {a.x+b.x, a.y+b.y, a.z+b.z};
-}
-
-Vector3 operator*=(const Vector3& a, const vec3 &b) {//is actually =
-	return {b.x, b.y, b.z};
-}
-
-vec3 operator*=(const vec3& a, const Vector3 &b) {//is actually =
-	return {b.x, b.y, b.z};
-}
-
-Vector2 operator*=(const Vector2& a, const vec2 &b) {//is actually =
-	return {b.x, b.y};
-}
+#include "globals.hpp"
+#include "player.hpp"
+#include "convars.hpp"
+#include "utils.hpp"
 
 Player::Player() {
-	m_surfaceFriction = convars::get("groundFriction").asFloat;
 	health = 100;
-	Vector3 spawnPos = {10, 10, 10};
-	transform.translation = spawnPos;
-	mv.m_flMaxSpeed = convars::get("maxSpeed").asFloat;
-	view.offset = vec3(0, convars::get("viewHeight").asFloat, 0);
-	m_bOnGround = false;
+	transform.translation = {-1, 1, 0};
+	mv.m_flMaxSpeed = convars::getFloat("maxSpeed");
+	view.offset = vec3(0, convars::getFloat("viewHeight"), 0);
+	m_surfaceFriction = convars::getFloat("groundFriction");
+	m_bOnGround = true;
 	m_bSliding = false;
 	view.targFov = 70;
 	DisableCursor();
@@ -48,10 +24,10 @@ void Player::updatePlayer(Camera3D &camera) {
 	if (globals::paused) return;
 	Vector2 mDelta = GetMouseDelta()*0.005f*(int)(!globals::paused);
 	view.rotation += vec2(mDelta.x, mDelta.y);
-	vec2 viewRotation = view.rotation + view.m_vecFxViewOffset_t*0.02f;
-	//io::print((ZString)textFormat("View rotation: %f\n", view.rotation.y));
 	if (view.rotation.y > 3.14f) { view.rotation.y = 3.14f; }
 	if (view.rotation.y < 0.1) { view.rotation.y = 0.1; }
+	vec2 viewRotation = view.rotation + view.m_vecFxViewOffset_t*0.02f;
+	//io::print((ZString)textFormat("View rotation: %f\n", view.rotation.y));
 
 	//Sliding logic
 	if (IsKeyDown(KEY_LEFT_CONTROL) && !m_bDucked) {
@@ -61,9 +37,9 @@ void Player::updatePlayer(Camera3D &camera) {
 	}
 
 	if (m_bSliding) {
-		view.offset.y = convars::get("viewHeight").asFloat/5;
+		view.offset.y = convars::getFloat("viewHeight")/5;
 	} else {
-		view.offset.y = convars::get("viewHeight").asFloat;
+		view.offset.y = convars::getFloat("viewHeight");
 	}
 
 	view.lookDir = vec3(sin(-viewRotation.x)*sin(viewRotation.y),
@@ -71,17 +47,16 @@ void Player::updatePlayer(Camera3D &camera) {
 					    cos(-viewRotation.x)*sin(viewRotation.y));
 
 	fullWalkMove();
-	transform.translation += mv.m_vecVelocity * globals::frametime*60.0f * (float)(!globals::paused);
+	transform.translation += mv.m_vecVelocity * globals::frametime*60.0f;
 	view.offset_t += (view.offset-view.offset_t)*globals::frametime*10.0f;
 	camera.position = view.offset_t+transform.translation;
 
 	float speed = glm::length(vec3(mv.m_vecVelocity.x, 0, mv.m_vecVelocity.z));
 	distanceWalked += speed;
-	//   -- Camera effects
+	//  -- Camera effects
 	// fov
-	//camera.fovy = 70 + speed;
-	view.targFov = 70 + glm::dot(view.lookDir, vec3(mv.m_vecVelocity.x, 0, mv.m_vecVelocity.z*3.0f));
-	camera.fovy += (view.targFov-camera.fovy)*globals::frametime*10;
+	view.targFov = 70 + glm::dot(view.lookDir, vec3(mv.m_vecVelocity.x, 0, mv.m_vecVelocity.z*3.0f))*1.5;
+	camera.fovy += (view.targFov-camera.fovy)*globals::frametime*20;
 	// Camera "bounce"
 	if (m_bSprinting) {
 		view.m_vecFxViewOffset = vec2(sin(distanceWalked*0.005f), abs(cos(distanceWalked*0.01f)));
@@ -98,12 +73,6 @@ void Player::updatePlayer(Camera3D &camera) {
 		mv.m_vecVelocity.y = 0;
 	}
 
-	/*
-	ZString a = (ZString)textFormat("%f %f %f\n", camera.position.x, camera.position.y, camera.position.z );
-	ZString b = (ZString)textFormat("%f %f %f\n", camera.target.x, camera.target.y, camera.target.z );
-	io::print(a);
-	io::print(b);
-	 */
 	camera.target = camera.position+view.lookDir;
 }
 
@@ -115,11 +84,10 @@ void Player::friction() {
 	float	drop = 0;
 
 	//Calculate speed
-	speed = mv.m_vecVelocity.length();
+	speed = glm::length(mv.m_vecVelocity);
 
-	if (speed < 2.0f) { m_bSprinting = false; }
+	if (speed < 1.0f) { m_bSprinting = false; }
 	if (speed < 0.0001f) { mv.m_vecVelocity = vec3(0, 0, 0); return; }
-
 
 	if (isOnGround) { friction = m_surfaceFriction; }
 
@@ -153,6 +121,7 @@ void Player::walkMove() {
 		wishVel += view.lookDir;
 		if (IsKeyDown(KEY_LEFT_SHIFT)) {
 			m_bSprinting = true;
+			printf("Started sprinting\n");
 		}
 	} else {
 		m_bSprinting = false;
@@ -165,7 +134,7 @@ void Player::walkMove() {
 	//Check if we want to sprint
 
 	//Normalise velocity
-	if (wishVel.length() > 0) {//Avoid division by 0
+	if (glm::length(wishVel) > 0) {//Avoid division by 0
 		mv.m_outWishVel = glm::normalize(wishVel);
 		if (m_bSliding) wishVel *= 0.001f;
 	} else {//Reset wishVel
@@ -174,11 +143,12 @@ void Player::walkMove() {
 	//Apply friction
 	friction();
 	//Jump
-	if (IsKeyPressed(KEY_SPACE) || (convars::get("autoBunnyHop").asBool && IsKeyDown(KEY_SPACE))) {
-		mv.m_outWishVel += vec3(0, convars::get("jumpPower").asFloat, 0);
+	if (IsKeyPressed(KEY_SPACE) || (convars::getBool("autoBunnyHop") && IsKeyDown(KEY_SPACE))) {
+		mv.m_vecVelocity += vec3(0, convars::getFloat("jumpPower"), 0);
 		//view.m_vecFxViewOffset_t += (Vector2){0, 10};
 	}
-	accelerate(mv.m_outWishVel, mv.m_flMaxSpeed*(1.0f+1.0f*(int)m_bSprinting), (convars::get("acceleration").asFloat));
+	if (!m_bSprinting) accelerate(mv.m_outWishVel, mv.m_flMaxSpeed, (convars::getFloat("acceleration")));
+	else accelerate(mv.m_outWishVel, mv.m_flMaxSpeed, convars::getFloat("acceleration")*convars::getFloat("sprintFac"));
 	//transform.translation.y = 0;
 }
 
@@ -201,7 +171,7 @@ void Player::accelerate(vec3 &wishdir, float wishSpeed, float accel) {
 	if (accelSpeed > addSpeed) accelSpeed = addSpeed;
 
 	//Adjust pmove vel
-	mv.m_vecVelocity += ( wishdir ) * accelSpeed;
+	mv.m_vecVelocity += wishdir * accelSpeed;
 	//ZString dbgMsg = (ZString)textFormat("WishDir: %f %f %f\nCurrentSpeed: %f\nAddspeed: %f\nAccel speed: %f\nOutWishVel: %f %f %f\nPosition: %f %f %f\n", wishdir.x, wishdir.y, wishdir.z, currentSpeed, addSpeed, accelSpeed, mv.m_outWishVel.x, mv.m_outWishVel.y, mv.m_outWishVel.z, transform.translation.x, transform.translation.y, transform.translation.z);
 	//io::print(dbgMsg);
 }
@@ -217,14 +187,13 @@ void Player::airMove() {
 
 	wishVel.y = 0;
 
-	if (wishVel.length() > 0) {
+	if (glm::length(wishVel) > 0) {
 		mv.m_outWishVel = glm::normalize(wishVel);
-	}
-	else {
+	} else {
 		mv.m_outWishVel = vec3(0);
 	}
 
-	airAccelerate(mv.m_outWishVel, convars::get("maxAirSpeed").asFloat, convars::get("airAcceleration").asFloat);
+	airAccelerate(mv.m_outWishVel, convars::getFloat("maxAirSpeed"), convars::getFloat("airAcceleration"));
 	//transform.translation.y = 0;
 }
 
@@ -251,7 +220,7 @@ void Player::airAccelerate(vec3 &wishdir, float wishSpeed, float accel) {
 }
 
 void Player::addGravity() {
-	float ent_gravity = convars::get("gravity").asFloat;
+	float ent_gravity = convars::getFloat("gravity");
 
 	// Add gravity incorrectly
 	mv.m_vecVelocity.y -= (ent_gravity * globals::frametime);

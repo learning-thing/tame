@@ -79,7 +79,8 @@ FetchContent_MakeAvailable(r3d)
 
 # Add source files here
 set(SOURCES
-				src/main.cpp
+	src/main.cpp
+	src/player.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
@@ -96,8 +97,9 @@ endif()
 
 target_include_directories(${PROJECT_NAME}
 				PRIVATE
-								${r3d_SOURCE_DIR}/include
-								${raylib_SOURCE_DIR}/include
+				${r3d_SOURCE_DIR}/include
+				${raylib_SOURCE_DIR}/include
+				src/include
 )
 
 target_link_libraries(${PROJECT_NAME}

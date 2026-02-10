@@ -3,27 +3,25 @@
 #include <math.h>
 #include <raylib.h>
 #include <glm/glm.hpp>
-#include "globals.hpp"
-#include "convars.hpp"
 
 using namespace glm;
 
 //Where the eyes are
 struct PlayerView {
-	vec3 offset_t;
-	vec3 offset;
-	vec2 rotation;
-	vec3 lookDir;
-	vec2 m_vecFxViewOffset;//Actual offset from effects
-	vec2 m_vecFxViewOffset_t;//interpolated+#
-	vec3 cameraTilt;
-	float targFov;
+	vec3 offset_t = vec3(0);
+	vec3 offset = vec3(0);
+	vec2 rotation = vec2(0);
+	vec3 lookDir = vec3(1, 0, 0);
+	vec2 m_vecFxViewOffset = vec2(0);//Actual offset from effects
+	vec2 m_vecFxViewOffset_t = vec2(0);//interpolated+#
+	vec3 cameraTilt = vec3(0);
+	float targFov = 0;
 };
 
 struct CMoveData {
 	float m_flMaxSpeed;
-	vec3 m_vecVelocity;
-	vec3 m_outWishVel;
+	vec3 m_vecVelocity = vec3(0);
+	vec3 m_outWishVel = vec3(0);
 };
 
 class Player {
@@ -31,11 +29,11 @@ class Player {
 	Transform transform;
 	PlayerView view;
 	CMoveData mv;
-	float m_flGravity;
+	float m_flGravity = 0;
 	float m_surfaceFriction;
-	int health;
-	bool m_bOnGround;
-	bool m_bSliding;
+	int health = 100;
+	bool m_bOnGround = true;
+	bool m_bSliding = false;
 	/*Later:
 	- StartSlide (slide starting, not fully in slide yet)
 	- Inslide (Fully in slide)
@@ -59,5 +57,5 @@ class Player {
 	bool canAccelerate();
 
 	Player();
-	~Player();
+	~Player() = default;
 };

@@ -1,7 +1,7 @@
 [
 	{
 		"label": "Build and run Cmake",
-		"command": "cmake -B build -G \"Ninja\" && cd build && ninja -j 8 && ./tame",
+		"command": "cmake -DCMAKE_BUILD_TYPE=Debug -B build -G \"Ninja\" && cd build && ninja -j 8 && ./tame",
 		//"env": { "foo": "bar" },
 		"use_new_terminal": false,
 		"allow_concurrent_runs": false,

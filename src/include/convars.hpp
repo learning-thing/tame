@@ -3,14 +3,14 @@
 #include <string>
 #include <unordered_map>
 #include <variant>
-
-
+#include <iostream>
+#include "utils.hpp"
 
 namespace convars {
 	using ConVar = std::variant<int, float, glm::vec3, bool>;
 
 	inline std::unordered_map<std::string, ConVar> CONVARS;
-    // Verwendung von operator[], da variant Zuweisungen sauber handhabt
+    // Assign
     inline void set(const std::string& name, ConVar value) {
         CONVARS[name] = value;
     }
@@ -27,15 +27,36 @@ namespace convars {
 		set("gravity", 2.5f);
 		set("jumpPower", 1.0f);
 		set("autoBunnyHop", true);
+		set("mSense", 0.002f);
     }
 
-    // Beispiel für den sicheren Zugriff
+    inline void printAll() {
+	    for (auto& it : convars::CONVARS) {
+	    	switch (it.second.index()) {
+	     		case 0://int
+		      		std::cout << it.first << ": " << std::get<int>(it.second) << "\n";
+		      		break;
+				case 1:
+					std::cout << it.first << ": " << std::get<float>(it.second) << "\n";
+		 			break;
+				case 2:
+					std::cout << it.first << ": ";
+					print(std::get<glm::vec3>(it.second));
+		 			break;
+				case 3:
+					std::cout << it.first << ": " << (std::get<bool>(it.second) ? "true" : "false") << "\n";
+		 			break;
+	     	}
+	    }
+    }
+    // Get Variant as float
     inline float getFloat(const std::string& name) {
         if (CONVARS.count(name)) {
             return std::get<float>(CONVARS[name]);
         }
         return 0.0f;
     }
+    // GetVariant as vec3
     inline glm::vec3 getVec3(const std::string& name) {
         if (CONVARS.count(name)) {
             return std::get<glm::vec3>(CONVARS[name]);

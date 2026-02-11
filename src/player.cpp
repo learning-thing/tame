@@ -18,23 +18,44 @@ Player::Player() {
 	m_bSliding = false;
 	view.targFov = 70;
 	DisableCursor();
+	mSense = convars::getFloat("mSense");
 }
 
 void Player::updatePlayer(Camera3D &camera) {
 	if (globals::paused) return;
-	Vector2 mDelta = GetMouseDelta()*0.005f*(int)(!globals::paused);
-	view.rotation += vec2(mDelta.x, mDelta.y);
-	if (view.rotation.y > 3.14f) { view.rotation.y = 3.14f; }
-	if (view.rotation.y < 0.1) { view.rotation.y = 0.1; }
-	vec2 viewRotation = view.rotation + view.m_vecFxViewOffset_t*0.02f;
-	//io::print((ZString)textFormat("View rotation: %f\n", view.rotation.y));
-
 	//Sliding logic
 	if (IsKeyDown(KEY_LEFT_CONTROL) && !m_bDucked) {
 		m_bSliding = true;
 	} else {
 		m_bSliding = false;
 	}
+
+	fullWalkMove();
+	transform.translation += mv.m_vecVelocity * globals::tickTime*60.0f;
+
+	//Add addGravity
+	if (transform.translation.y > 0) { addGravity(); m_bOnGround = false; }
+	if (transform.translation.y <= 0)  {
+		m_bOnGround = true;
+		if (m_bOnGround && !m_bWasOnGround)  PlaySound(mv.groundHitSound);
+		transform.translation.y = 0;
+		mv.m_vecVelocity.y = 0;
+	}
+	m_bWasOnGround = m_bOnGround;
+}
+
+void Player::viewUpdate(Camera3D &camera) {
+	if (globals::paused) return;
+	//mSense = convars::getFloat("mSense");
+	//float Sense = convars::getFloat("mSense");
+	//print("sensitivity: ", Sense);
+	//Vector2 mDelta = GetMouseDelta()*0.005f*(int)(!globals::paused);
+	Vector2 mDelta = GetMouseDelta();
+	view.rotation += vec2(mDelta.x, mDelta.y)*mSense;
+	if (view.rotation.y > 3.14f) { view.rotation.y = 3.14f; }
+	if (view.rotation.y < 0.1) { view.rotation.y = 0.1; }
+	vec2 viewRotation = view.rotation + view.m_vecFxViewOffset_t*0.02f;
+	//io::print((ZString)textFormat("View rotation: %f\n", view.rotation.y));
 
 	if (m_bSliding) {
 		view.offset.y = convars::getFloat("viewHeight")/5;
@@ -46,8 +67,6 @@ void Player::updatePlayer(Camera3D &camera) {
 					    cos(viewRotation.y),
 					    cos(-viewRotation.x)*sin(viewRotation.y));
 
-	fullWalkMove();
-	transform.translation += mv.m_vecVelocity * globals::frametime*60.0f;
 	view.offset_t += (view.offset-view.offset_t)*globals::frametime*10.0f;
 	camera.position = view.offset_t+transform.translation;
 
@@ -64,15 +83,6 @@ void Player::updatePlayer(Camera3D &camera) {
 		view.m_vecFxViewOffset = vec2(0);
 	}
 	view.m_vecFxViewOffset_t += (view.m_vecFxViewOffset-view.m_vecFxViewOffset_t)*globals::frametime*10.0f;
-
-	//Add addGravity
-	if (transform.translation.y > 0) { addGravity(); m_bOnGround = false; }
-	if (transform.translation.y <= 0)  {
-		m_bOnGround = true;
-		transform.translation.y = 0;
-		mv.m_vecVelocity.y = 0;
-	}
-
 	camera.target = camera.position+view.lookDir;
 }
 
@@ -92,8 +102,8 @@ void Player::friction() {
 	if (isOnGround) { friction = m_surfaceFriction; }
 
 	control = (speed < 0.01f) ? 0.01f : speed;
-	if (!m_bSliding) { drop += control * friction * globals::frametime; }
-	else {drop += control * friction * globals::frametime * 0.05f; }
+	if (!m_bSliding) { drop += control * friction * globals::tickTime; }
+	else {drop += control * friction * globals::tickTime * 0.05f; }
 	//io::printn((ZString)textFormat("Speed drop: %f\n", drop));
 	newspeed = speed - drop;
 	if (newspeed != speed) {
@@ -143,7 +153,7 @@ void Player::walkMove() {
 	//Apply friction
 	friction();
 	//Jump
-	if (IsKeyPressed(KEY_SPACE) || (convars::getBool("autoBunnyHop") && IsKeyDown(KEY_SPACE))) {
+	if (globals::keyPressed(globals::KEY_JUMP) || (convars::getBool("autoBunnyHop") && IsKeyDown(KEY_SPACE))) {
 		mv.m_vecVelocity += vec3(0, convars::getFloat("jumpPower"), 0);
 		//view.m_vecFxViewOffset_t += (Vector2){0, 10};
 	}
@@ -165,7 +175,7 @@ void Player::accelerate(vec3 &wishdir, float wishSpeed, float accel) {
 	if ( addSpeed <= 0) return;
 
 	//Determine amount of acceleration
-	accelSpeed = accel * globals::frametime * wishSpeed * m_surfaceFriction;
+	accelSpeed = accel * globals::tickTime * wishSpeed * m_surfaceFriction;
 
 	//Cap it
 	if (accelSpeed > addSpeed) accelSpeed = addSpeed;
@@ -210,7 +220,7 @@ void Player::airAccelerate(vec3 &wishdir, float wishSpeed, float accel) {
 	if ( addSpeed <= 0) return;
 
 	//Determine amount of acceleration
-	accelSpeed = accel * globals::frametime * wishSpeed * m_surfaceFriction;
+	accelSpeed = accel * globals::tickTime * wishSpeed * m_surfaceFriction;
 
 	//Cap it
 	if (accelSpeed > addSpeed) accelSpeed = addSpeed;
@@ -223,7 +233,7 @@ void Player::addGravity() {
 	float ent_gravity = convars::getFloat("gravity");
 
 	// Add gravity incorrectly
-	mv.m_vecVelocity.y -= (ent_gravity * globals::frametime);
+	mv.m_vecVelocity.y -= (ent_gravity * globals::tickTime);
 }
 
 bool Player::canAccelerate() {

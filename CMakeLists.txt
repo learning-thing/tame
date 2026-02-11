@@ -103,9 +103,10 @@ target_include_directories(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME}
-				PRIVATE
-								r3d
-								raylib
+	PRIVATE
+	r3d
+	raylib
+	/home/benji/Dokumente/Programme/tame/src/lib/libmujs.a
 )
 
 # On Windows, also link required system libs

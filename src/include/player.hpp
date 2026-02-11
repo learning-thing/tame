@@ -3,6 +3,7 @@
 #include <math.h>
 #include <raylib.h>
 #include <glm/glm.hpp>
+#include "utils.hpp"
 
 using namespace glm;
 
@@ -22,9 +23,11 @@ struct CMoveData {
 	float m_flMaxSpeed;
 	vec3 m_vecVelocity = vec3(0);
 	vec3 m_outWishVel = vec3(0);
+	Sound groundHitSound = LoadSound(SOUNDS_PATH "land.ogg");
 };
 
 class Player {
+	float mSense = 0;
 	public:
 	Transform transform;
 	PlayerView view;
@@ -33,6 +36,7 @@ class Player {
 	float m_surfaceFriction;
 	int health = 100;
 	bool m_bOnGround = true;
+	bool m_bWasOnGround = false;
 	bool m_bSliding = false;
 	/*Later:
 	- StartSlide (slide starting, not fully in slide yet)
@@ -47,6 +51,7 @@ class Player {
 	float distanceWalked;
 
 	void updatePlayer(Camera3D &camera);
+	void viewUpdate(Camera3D &camera);
 	void friction();
 	void fullWalkMove();
 	void walkMove();

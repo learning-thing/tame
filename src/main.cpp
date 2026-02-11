@@ -11,32 +11,17 @@
 #include <r3d/r3d.h>
 #include <raylib.h>
 #include <raymath.h>
+#include "utils.hpp"
 #include "player.hpp"
-
-#ifndef RESOURCES_PATH
-#define RESOURCES_PATH "res/"
-#define MODELS_PATH RESOURCES_PATH "models/"
-#define MATERIALS_PATH RESOURCES_PATH "materials/"
-#endif
-
-void print(vec3 v) {
-	std::cout << v.x << " " << v.y << " " << v.z << "\n";
-}
-
-void print(Vector3 v) {
-	std::cout << v.x << " " << v.y << " " << v.z << "\n";
-}
-
-void print(const char *msg, float f) {
-	std::cout << msg << f << "\n";
-}
+#include "console.hpp"
 
 int main(int argc, char **argv) {
     // Initialize window
     InitWindow(1920, 1080, "[r3d] - PBR example");
+    InitAudioDevice();
     SetWindowState(FLAG_WINDOW_RESIZABLE);
 
-    SetTargetFPS(100);
+    //SetTargetFPS(100);
 
     // Initialize R3D
     R3D_Init(GetScreenWidth(), GetScreenHeight());
@@ -94,23 +79,7 @@ int main(int argc, char **argv) {
 
     Player player;
 
-    for (auto& it : convars::CONVARS) {
-    	switch (it.second.index()) {
-     		case 0://int
-	      		std::cout << it.first << ": " << std::get<int>(it.second) << "\n";
-	      		break;
-			case 1:
-				std::cout << it.first << ": " << std::get<float>(it.second) << "\n";
-	 			break;
-			case 2:
-				std::cout << it.first << ": ";
-				print(std::get<glm::vec3>(it.second));
-	 			break;
-			case 3:
-				std::cout << it.first << ": " << (std::get<bool>(it.second) ? "true" : "false") << "\n";
-	 			break;
-     	}
-    }
+    convars::printAll();
 
     Matrix modelMatrix = MatrixIdentity();
     modelMatrix = MatrixMultiply(MatrixIdentity(), MatrixScale(50, 50, 50));
@@ -119,9 +88,25 @@ int main(int argc, char **argv) {
     // Main loop
     float speed = 0;
     float prevSpeed = 0;
+    bool limitFPS = false;
+    Console console;
+
     while (!WindowShouldClose()) {
+   		player.viewUpdate(camera);
    		globals::update(camera);
-   		player.updatePlayer(camera);
+     	//Dumbass Tick-system
+      	console.update();
+	    if (globals::tick()) {
+			prevSpeed = speed;
+			player.updatePlayer(camera);
+			speed = glm::length(player.mv.m_vecVelocity);
+			globals::newTick();
+	    }
+
+		if (IsKeyPressed(KEY_Q)) {
+			limitFPS = !limitFPS;
+			limitFPS ? SetTargetFPS(100) : SetTargetFPS(0);
+		}
 
         BeginDrawing();
             ClearBackground(BLACK);
@@ -132,14 +117,10 @@ int main(int argc, char **argv) {
             DrawCircle(GetScreenWidth()/2, GetScreenHeight()/2, 2, BLACK);
             DrawCircle(GetScreenWidth()/2, GetScreenHeight()/2, 1, WHITE);
             DrawFPS(10, 10);
-            prevSpeed = speed;
-            speed = glm::length(player.mv.m_vecVelocity);
-            DrawText(TextFormat("Speed: %02f", speed), 10, 100, 20, (prevSpeed < speed) ? BLUE : RED);
-        EndDrawing();
 
-        //print(camera.position);
-        //print(player.mv.m_vecVelocity);
-        //print("Max Speed: ", convars::get("maxSpeed").asFloat);
+            DrawText(TextFormat("Speed: %02f", speed), 10, 100, 20, (prevSpeed < speed) ? GREEN : RED);
+            console.draw();
+        EndDrawing();
     }
 
     // Cleanup

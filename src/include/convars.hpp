@@ -27,7 +27,7 @@ namespace convars {
 		set("gravity", 2.5f);
 		set("jumpPower", 1.0f);
 		set("autoBunnyHop", true);
-		set("mSense", 0.002f);
+		set("mSense", 2.0f);
     }
 
     inline void printAll() {

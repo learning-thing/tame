@@ -29,8 +29,8 @@ set(SUPPORT_FILEFORMAT_HDR ON CACHE BOOL "" FORCE)
 
 # assimp knobs (leaner build; keep install/tests off)
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(ASSIMP_NO_EXPORT ON CACHE BOOL "" FORCE)
-set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
+set(ASSIMP_NO_EXPORT OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INSTALL ON CACHE BOOL "" FORCE)
 
 # Fetch raylib
 message(STATUS "Downloading and configuring raylib...")

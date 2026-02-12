@@ -9,4 +9,4 @@ var maxAirSpeed = 0.5;
 var gravity = 2.5;
 var jumpPower = 1.0;
 var autoBunnyHop = false;
-var mSense = 0.002;
+var mSense = 2.0;

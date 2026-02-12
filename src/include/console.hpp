@@ -1,18 +1,29 @@
 #pragma once
+#include <cstdio>
 #include <iostream>
 #include <raylib.h>
 #include "convars.hpp"
 #include "utils.hpp"
 #include "globals.hpp"
 #include "mujs/mujs.h"
+#include <vector>
+#include <string>
+#include <sstream>
 
 static void JsB_print(js_State *j) {
 	std::cout << js_tonumber(j, 1) << "\n";
+}
+static void JsB_prints(js_State *j) {
+	std::cout << js_tostring(j, 1) << "\n";
 }
 
 class Console {
 	bool hidden = true;
 	js_State *runtime;
+	std::vector<std::string> history;
+	int histPos = 0;
+	std::stringstream coutbuffer;
+	std::streambuf *old = std::cout.rdbuf(coutbuffer.rdbuf());
 
 	void updateConvars() {
 		for (auto& it : convars::CONVARS) {
@@ -36,9 +47,17 @@ class Console {
 
 	void run() {
 		js_dostring(runtime, (cmdline+";\n").c_str());
+		history.push_back(cmdline);
+		for (auto& it : history) {
+			//printf("%s\n", it.c_str());
+		}
+		//printf("%d\n", histPos);
 		cmdline.clear();
 		updateConvars();
-		globals::togglePause();
+		//globals::togglePause();
+		//hidden = true;
+		histPos = 0;
+		std::string text = coutbuffer.str(); // text will now contain "Bla\n"
 	}
 
 	public:
@@ -48,31 +67,56 @@ class Console {
 	Console() {
 		runtime = js_newstate(nullptr, nullptr, 0);
 		registerJSFunc(JsB_print, "print");
+		registerJSFunc(JsB_prints, "prints");
 		js_dofile(runtime, SCRIPTS_PATH "start.js");
 		updateConvars();
 	}
+
+	~Console() {
+		std::cout.rdbuf(old);
+	}
+
 	void update() {
-		if (!globals::paused) {
-			hidden = true;
-		}
+
 		if (!hidden) {
 			if (globals::newKey != 0) {
-				cmdline += GetCharPressed();
+				cmdline += globals::newKey;
 				//printf("%c\n", globals::newKey);
+			}
+			if (IsKeyPressed(KEY_ESCAPE)) {
+				hidden = true;
 			}
 			if (IsKeyPressed(KEY_BACKSPACE) && cmdline.length()) cmdline.pop_back();
 			if (IsKeyPressed(KEY_ENTER)) run();
+			if (IsKeyPressed(KEY_UP)) {
+				if (history.size()-histPos > 0 && !history.empty()) {
+					histPos++;
+					cmdline = history[history.size()-histPos];
+				}
+			}
+			if (IsKeyPressed(KEY_DOWN)) {
+				if (histPos > 1) {
+					histPos--;
+					cmdline = history[history.size()-histPos];
+				}
+			}
+			//printf("%d / %d: %s\n", histPos, (int)history.size(), cmdline.c_str());
+			if (histPos > 1 && (history.size()-histPos) > 0 && !history.empty()) {
+			}
+			globals::consoleActive = !hidden;
 			return;
 		}
 		if (globals::keyPressed(globals::KEY_CONSOLE_TOGGLE)) {
 			hidden = !hidden;
-			globals::togglePause();
+			//globals::togglePause();
 		}
 	}
 	void draw() {
 		if (!hidden) {
 			DrawRectangle(0, GetScreenHeight()-40, GetScreenWidth()/2, 40, ColorAlpha(BLACK, .4));
-			DrawText((cmdline+( ((int)globals::iTime % 2 == 0) ? "_" : " ")).c_str(), 0, GetScreenHeight()-30, 20, WHITE);
+			DrawText((cmdline+( ((int)globals::iTime*2 % 2 == 0) ? "_" : " ")).c_str(), 0, GetScreenHeight()-30, 20, WHITE);
+			//Draw Console output
+			DrawText((coutbuffer.str()+"\n").c_str(), 0, 30, 20, WHITE);
 		}
 	}
 };

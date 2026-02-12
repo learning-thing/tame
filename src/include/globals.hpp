@@ -23,7 +23,7 @@ namespace globals {
 	inline float iTime;
 	inline float frametime;
 	inline bool paused = false;
-
+	inline bool consoleActive = false;
 
 	inline char newKey;
 	static char lastKey;
@@ -38,11 +38,11 @@ namespace globals {
 	}
 
 	inline void update(Camera3D &camera) {
-		//if (!globals::paused && IsWindowFocused()) globals::togglePause();
+		if (!globals::paused && !IsWindowFocused()) globals::togglePause();
 		frametime = GetFrameTime();
 		iTime += frametime;
 		tickTime+=frametime;
-		if (IsKeyPressed(KEY_ESCAPE)) togglePause();
+		if (IsKeyPressed(KEY_ESCAPE) && !consoleActive) togglePause();
 
 		//update tick keys
 		lastKey = newKey;
@@ -54,7 +54,7 @@ namespace globals {
 				break;
 			case ' ':
 				lastTickKeys |= KEY_JUMP;
-				newKey = 0;
+				//newKey = 0;
 				break;
 			default:
 				//printf("KEY PRESSED: %d");

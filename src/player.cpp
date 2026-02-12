@@ -23,8 +23,9 @@ Player::Player() {
 
 void Player::updatePlayer(Camera3D &camera) {
 	if (globals::paused) return;
+	mSense = convars::getFloat("mSense")/1000;
 	//Sliding logic
-	if (IsKeyDown(KEY_LEFT_CONTROL) && !m_bDucked) {
+	if (IsKeyDown(KEY_LEFT_CONTROL) && !m_bDucked && !globals::consoleActive) {
 		m_bSliding = true;
 	} else {
 		m_bSliding = false;
@@ -74,7 +75,7 @@ void Player::viewUpdate(Camera3D &camera) {
 	distanceWalked += speed;
 	//  -- Camera effects
 	// fov
-	view.targFov = 70 + glm::dot(view.lookDir, vec3(mv.m_vecVelocity.x, 0, mv.m_vecVelocity.z*3.0f))*1.5;
+	view.targFov = 70 + glm::dot(vec3(view.lookDir.x, 0, view.lookDir.z), vec3(mv.m_vecVelocity.x, 0, mv.m_vecVelocity.z))*5;
 	camera.fovy += (view.targFov-camera.fovy)*globals::frametime*20;
 	// Camera "bounce"
 	if (m_bSprinting) {
@@ -93,11 +94,13 @@ void Player::friction() {
 	float	friction = 0;
 	float	drop = 0;
 
+	m_surfaceFriction = convars::getFloat("groundFriction");
+
 	//Calculate speed
 	speed = glm::length(mv.m_vecVelocity);
 
 	if (speed < 1.0f) { m_bSprinting = false; }
-	if (speed < 0.0001f) { mv.m_vecVelocity = vec3(0, 0, 0); return; }
+	if (speed < 0.001f) { mv.m_vecVelocity = vec3(0, 0, 0); return; }
 
 	if (isOnGround) { friction = m_surfaceFriction; }
 
@@ -127,18 +130,20 @@ void Player::walkMove() {
 	//vec3 forward, right, up;
 	vec3 strafeDir = glm::cross(view.lookDir, vec3(0, 1, 0));
 
-	if (IsKeyDown(KEY_W) && !m_bSliding) {
-		wishVel += view.lookDir;
-		if (IsKeyDown(KEY_LEFT_SHIFT)) {
-			m_bSprinting = true;
-			printf("Started sprinting\n");
+	if (!globals::consoleActive) {
+		if (IsKeyDown(KEY_W) && !m_bSliding) {
+			wishVel += view.lookDir;
+			if (IsKeyDown(KEY_LEFT_SHIFT)) {
+				m_bSprinting = true;
+				printf("Started sprinting\n");
+			}
+		} else {
+			m_bSprinting = false;
 		}
-	} else {
-		m_bSprinting = false;
+		if (IsKeyDown(KEY_S)) { wishVel -= view.lookDir; }
+		if (IsKeyDown(KEY_A)) { wishVel -= strafeDir; }
+		if (IsKeyDown(KEY_D)) { wishVel += strafeDir; }
 	}
-	if (IsKeyDown(KEY_S)) { wishVel -= view.lookDir; }
-	if (IsKeyDown(KEY_A)) { wishVel -= strafeDir; }
-	if (IsKeyDown(KEY_D)) { wishVel += strafeDir; }
 	wishVel.y = 0;
 
 	//Check if we want to sprint
@@ -153,7 +158,7 @@ void Player::walkMove() {
 	//Apply friction
 	friction();
 	//Jump
-	if (globals::keyPressed(globals::KEY_JUMP) || (convars::getBool("autoBunnyHop") && IsKeyDown(KEY_SPACE))) {
+	if (!globals::consoleActive) if (globals::keyPressed(globals::KEY_JUMP) || (convars::getBool("autoBunnyHop") && IsKeyDown(KEY_SPACE))) {
 		mv.m_vecVelocity += vec3(0, convars::getFloat("jumpPower"), 0);
 		//view.m_vecFxViewOffset_t += (Vector2){0, 10};
 	}

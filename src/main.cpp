@@ -17,9 +17,12 @@
 
 int main(int argc, char **argv) {
     // Initialize window
+    Console console;//Redirect everything into console from here
+    //
     InitWindow(1920, 1080, "[r3d] - PBR example");
     InitAudioDevice();
     SetWindowState(FLAG_WINDOW_RESIZABLE);
+
 
     //SetTargetFPS(100);
 
@@ -41,8 +44,8 @@ int main(int argc, char **argv) {
     R3D_ENVIRONMENT_SET(background.sky, cubemap);
 
     // Setup bloom
-    R3D_ENVIRONMENT_SET(bloom.mode, R3D_BLOOM_MIX);
-    R3D_ENVIRONMENT_SET(bloom.intensity, 0.02f);
+    //R3D_ENVIRONMENT_SET(bloom.mode, R3D_BLOOM_MIX);
+    //R3D_ENVIRONMENT_SET(bloom.intensity, 0.02f);
 
     R3D_ENVIRONMENT_SET(background.sky, skyProcedural);
     R3D_ENVIRONMENT_SET(ambient.map, ambientProcedural);
@@ -89,7 +92,6 @@ int main(int argc, char **argv) {
     float speed = 0;
     float prevSpeed = 0;
     bool limitFPS = false;
-    Console console;
 
     while (!WindowShouldClose()) {
    		player.viewUpdate(camera);
@@ -112,7 +114,7 @@ int main(int argc, char **argv) {
             ClearBackground(BLACK);
             R3D_Begin(camera);
                 R3D_DrawMesh(groundPlane, mat, {0, -10, 0}, 1.0f);
-                R3D_DrawModelPro(model, modelMatrix);
+                //R3D_DrawModelPro(model, modelMatrix);
             R3D_End();
             DrawCircle(GetScreenWidth()/2, GetScreenHeight()/2, 2, BLACK);
             DrawCircle(GetScreenWidth()/2, GetScreenHeight()/2, 1, WHITE);
@@ -129,6 +131,7 @@ int main(int argc, char **argv) {
     R3D_UnloadCubemap(cubemap);
     R3D_Close();
 
+    CloseAudioDevice();
     CloseWindow();
 
     return 0;

@@ -75,14 +75,16 @@ void Player::viewUpdate(Camera3D &camera) {
 	distanceWalked += speed;
 	//  -- Camera effects
 	// fov
-	view.targFov = 70 + glm::dot(vec3(view.lookDir.x, 0, view.lookDir.z), vec3(mv.m_vecVelocity.x, 0, mv.m_vecVelocity.z))*5;
+	view.targFov = 70 + abs(glm::dot(vec3(view.lookDir.x, 0, view.lookDir.z), vec3(mv.m_vecVelocity.x, 0, mv.m_vecVelocity.z)))*4;
 	camera.fovy += (view.targFov-camera.fovy)*globals::frametime*20;
+
 	// Camera "bounce"
+	/*
 	if (m_bSprinting) {
 		view.m_vecFxViewOffset = vec2(sin(distanceWalked*0.005f), abs(cos(distanceWalked*0.01f)));
 	} else {
 		view.m_vecFxViewOffset = vec2(0);
-	}
+	} */
 	view.m_vecFxViewOffset_t += (view.m_vecFxViewOffset-view.m_vecFxViewOffset_t)*globals::frametime*10.0f;
 	camera.target = camera.position+view.lookDir;
 }

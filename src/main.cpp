@@ -1,3 +1,4 @@
+#include "collision.hpp"
 #include "convars.hpp"
 #include "globals.hpp"
 #include "r3d/r3d_ambient_map.h"
@@ -11,20 +12,20 @@
 #include <r3d/r3d.h>
 #include <raylib.h>
 #include <raymath.h>
+#include "tArray.hpp"
 #include "utils.hpp"
 #include "player.hpp"
 #include "console.hpp"
 
 int main(int argc, char **argv) {
-    // Initialize window
-    Console console;//Redirect everything into console from here
+
     //
-    InitWindow(1920, 1080, "[r3d] - PBR example");
+    InitWindow(1920, 1080, "Tame engine/game");
+    SetWindowMonitor(0);
     InitAudioDevice();
-    SetWindowState(FLAG_WINDOW_RESIZABLE);
+    //SetWindowState(FLAG_WINDOW_RESIZABLE);
 
-
-    //SetTargetFPS(100);
+    SetTargetFPS(GetMonitorRefreshRate(GetCurrentMonitor()));
 
     // Initialize R3D
     R3D_Init(GetScreenWidth(), GetScreenHeight());
@@ -57,7 +58,7 @@ int main(int argc, char **argv) {
 
     // Load model
     R3D_SetTextureFilter(TEXTURE_FILTER_ANISOTROPIC_4X);
-    R3D_Model model = R3D_LoadModel(RESOURCES_PATH "models/DamagedHelmet.glb");
+    //R3D_Model model = R3D_LoadModel(RESOURCES_PATH "models/DamagedHelmet.glb");
 
     // Setup camera
     Camera3D camera = {
@@ -81,6 +82,11 @@ int main(int argc, char **argv) {
     convars::init();
 
     Player player;
+    tArray<hitBox> hitBoxes(10);
+    hitBoxes.pushBack(hitBox(&player));
+
+    // Initialize window
+    Console console(player);//Redirect everything into console from here
 
     convars::printAll();
 
@@ -103,11 +109,12 @@ int main(int argc, char **argv) {
 			player.updatePlayer(camera);
 			speed = glm::length(player.mv.m_vecVelocity);
 			globals::newTick();
+			//std::cout << playerHitBox.getChunk().x << " " << playerHitBox.getChunk().y << "\n";
 	    }
 
 		if (IsKeyPressed(KEY_Q)) {
 			limitFPS = !limitFPS;
-			limitFPS ? SetTargetFPS(100) : SetTargetFPS(0);
+			limitFPS ? SetTargetFPS(GetMonitorRefreshRate(GetCurrentMonitor())) : SetTargetFPS(0);
 		}
 
         BeginDrawing();
@@ -126,7 +133,7 @@ int main(int argc, char **argv) {
     }
 
     // Cleanup
-    R3D_UnloadModel(model, true);
+    //R3D_UnloadModel(model, true);
     R3D_UnloadAmbientMap(ambientProcedural);
     R3D_UnloadCubemap(cubemap);
     R3D_Close();

@@ -1,14 +1,14 @@
 #pragma once
-#include <cstdio>
 #include <iostream>
 #include <raylib.h>
+#include <string>
+#include <sstream>
 #include "convars.hpp"
+#include "player.hpp"
 #include "utils.hpp"
 #include "globals.hpp"
 #include "mujs/mujs.h"
-#include <vector>
-#include <string>
-#include <sstream>
+#include "tArray.hpp"
 
 static void JsB_print(js_State *j) {
 	std::cout << js_tonumber(j, 1) << "\n";
@@ -20,10 +20,12 @@ static void JsB_prints(js_State *j) {
 class Console {
 	bool hidden = true;
 	js_State *runtime;
-	std::vector<std::string> history;
+	tArray<std::string> history = 10;
 	int histPos = 0;
 	std::stringstream coutbuffer;
 	std::streambuf *old = std::cout.rdbuf(coutbuffer.rdbuf());
+	Player m_pPlayer;
+	float backSpaceDown = 0;
 
 	void updateConvars() {
 		for (auto& it : convars::CONVARS) {
@@ -47,10 +49,8 @@ class Console {
 
 	void run() {
 		js_dostring(runtime, (cmdline+";\n").c_str());
-		history.push_back(cmdline);
-		for (auto& it : history) {
-			//printf("%s\n", it.c_str());
-		}
+		history.pushBack(cmdline.c_str());
+		//if (history.size() > 10) history.pop_front();
 		//printf("%d\n", histPos);
 		cmdline.clear();
 		updateConvars();
@@ -61,10 +61,10 @@ class Console {
 	}
 
 	public:
-	std::string cmdline = "";
+	std::string cmdline;
 	int cursorPos = cmdline.length()-1;
 
-	Console() {
+	Console(Player& player) : m_pPlayer(player) {
 		runtime = js_newstate(nullptr, nullptr, 0);
 		registerJSFunc(JsB_print, "print");
 		registerJSFunc(JsB_prints, "prints");
@@ -77,7 +77,6 @@ class Console {
 	}
 
 	void update() {
-
 		if (!hidden) {
 			if (globals::newKey != 0) {
 				cmdline += globals::newKey;
@@ -86,10 +85,24 @@ class Console {
 			if (IsKeyPressed(KEY_ESCAPE)) {
 				hidden = true;
 			}
-			if (IsKeyPressed(KEY_BACKSPACE) && cmdline.length()) cmdline.pop_back();
+			if (IsKeyPressed(KEY_BACKSPACE) && cmdline.length()) {
+				cmdline.pop_back();
+			}
+			if (IsKeyDown(KEY_BACKSPACE)) {
+				backSpaceDown += globals::frametime;
+				//std::cout << backSpaceDown << "\n";
+				if ( backSpaceDown >= .2f && ((int)(globals::iTime*100 ) % 2 == 0)) {
+					if (!cmdline.empty()) {
+						cmdline.pop_back();
+					}
+				}
+			}
+			if (IsKeyReleased(KEY_BACKSPACE)) backSpaceDown = 0;
 			if (IsKeyPressed(KEY_ENTER)) run();
 			if (IsKeyPressed(KEY_UP)) {
-				if (history.size()-histPos > 0 && !history.empty()) {
+				if (histPos < history.size() && !history.empty()) {
+					//std::cout << history.size() << "\n";
+					//std::cout << histPos << "\n";
 					histPos++;
 					cmdline = history[history.size()-histPos];
 				}
@@ -101,8 +114,9 @@ class Console {
 				}
 			}
 			//printf("%d / %d: %s\n", histPos, (int)history.size(), cmdline.c_str());
+			/*
 			if (histPos > 1 && (history.size()-histPos) > 0 && !history.empty()) {
-			}
+			} */
 			globals::consoleActive = !hidden;
 			return;
 		}
@@ -114,9 +128,9 @@ class Console {
 	void draw() {
 		if (!hidden) {
 			DrawRectangle(0, GetScreenHeight()-40, GetScreenWidth()/2, 40, ColorAlpha(BLACK, .4));
-			DrawText((cmdline+( ((int)globals::iTime*2 % 2 == 0) ? "_" : " ")).c_str(), 0, GetScreenHeight()-30, 20, WHITE);
+			DrawText((cmdline+( ((int)globals::iTime*100 % 3 == 0) ? "_" : " ")).c_str(), 0, GetScreenHeight()-30, 20, WHITE);
 			//Draw Console output
-			DrawText((coutbuffer.str()+"\n").c_str(), 0, 30, 20, WHITE);
+			DrawText((coutbuffer.str()+"\n").c_str(), 3, 30, 20, WHITE);
 		}
 	}
 };

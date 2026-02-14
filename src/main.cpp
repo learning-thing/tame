@@ -1,6 +1,7 @@
 #include "collision.hpp"
 #include "convars.hpp"
 #include "globals.hpp"
+#include "ode/objects.h"
 #include "r3d/r3d_ambient_map.h"
 #include "r3d/r3d_draw.h"
 #include "r3d/r3d_environment.h"
@@ -16,6 +17,8 @@
 #include "utils.hpp"
 #include "player.hpp"
 #include "console.hpp"
+#include "ode/ode.h"
+
 
 int main(int argc, char **argv) {
 
@@ -73,22 +76,25 @@ int main(int argc, char **argv) {
     R3D_Material mat = R3D_GetDefaultMaterial();
     mat.albedo = R3D_LoadAlbedoMap(MATERIALS_PATH "ground/albedo.jpg", WHITE);
     mat.normal = R3D_LoadNormalMap(MATERIALS_PATH "ground/normal.jpg", 1.0f);
-    mat.uvScale = {10.f, 10.f};
+    mat.uvScale = {100.f, 100.f};
 
     R3D_Mesh groundPlane = R3D_GenMeshPlane(1000, 1000, 10, 10);
 
     SetExitKey(KEY_END);
 
-    convars::init();
 
-    Player player;
+    convars::init();
+    globals::player = new Player;
+
     tArray<hitBox> hitBoxes(10);
-    hitBoxes.pushBack(hitBox(&player));
+    hitBoxes.pushBack(hitBox(globals::player));
 
     // Initialize window
-    Console console(player);//Redirect everything into console from here
+    Console console;//Redirect everything into console from here
 
     convars::printAll();
+
+    //auto world = dWorldCreate();
 
     Matrix modelMatrix = MatrixIdentity();
     modelMatrix = MatrixMultiply(MatrixIdentity(), MatrixScale(50, 50, 50));
@@ -100,14 +106,15 @@ int main(int argc, char **argv) {
     bool limitFPS = false;
 
     while (!WindowShouldClose()) {
-   		player.viewUpdate(camera);
+   		globals::player->viewUpdate(camera);
    		globals::update(camera);
      	//Dumbass Tick-system
       	console.update();
 	    if (globals::tick()) {
 			prevSpeed = speed;
-			player.updatePlayer(camera);
-			speed = glm::length(player.mv.m_vecVelocity);
+			globals::player->updatePlayer(camera);
+			hitBoxes[0].update();
+			speed = glm::length(globals::player->mv.m_vecVelocity);
 			globals::newTick();
 			//std::cout << playerHitBox.getChunk().x << " " << playerHitBox.getChunk().y << "\n";
 	    }
@@ -127,7 +134,9 @@ int main(int argc, char **argv) {
             DrawCircle(GetScreenWidth()/2, GetScreenHeight()/2, 1, WHITE);
             DrawFPS(10, 10);
 
-            DrawText(TextFormat("Speed: %02f", speed), 10, 100, 20, (prevSpeed < speed) ? GREEN : RED);
+            if (convars::getBool("drawPos")) {
+            	DrawText(TextFormat("Chunk: %d %d\nPosition: %f %f\nSpeed: %02f", hitBoxes[0].getChunk().x, hitBoxes[0].getChunk().y, globals::player->transform.translation.x, globals::player->transform.translation.y, speed), 10, 100, 20, (prevSpeed < speed) ? GREEN : RED);
+            }
             console.draw();
         EndDrawing();
     }

@@ -23,7 +23,7 @@ class hitBox {
 		position = glm::vec3(owner->transform.translation.x, owner->transform.translation.y, owner->transform.translation.z);
 	}
 	glm::ivec2 getChunk() {
-		return glm::ivec2(int(position.x/10), int(position.z/10));
+		return glm::ivec2(position.x/100, position.z/100);
 	}
 	bool collidesWith (hitBox& hb) {
 		//Check the chunk x, then chunk y

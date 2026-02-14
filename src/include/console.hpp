@@ -24,7 +24,6 @@ class Console {
 	int histPos = 0;
 	std::stringstream coutbuffer;
 	std::streambuf *old = std::cout.rdbuf(coutbuffer.rdbuf());
-	Player m_pPlayer;
 	float backSpaceDown = 0;
 
 	void updateConvars() {
@@ -64,7 +63,7 @@ class Console {
 	std::string cmdline;
 	int cursorPos = cmdline.length()-1;
 
-	Console(Player& player) : m_pPlayer(player) {
+	Console() {
 		runtime = js_newstate(nullptr, nullptr, 0);
 		registerJSFunc(JsB_print, "print");
 		registerJSFunc(JsB_prints, "prints");

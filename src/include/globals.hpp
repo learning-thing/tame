@@ -1,6 +1,6 @@
 #pragma once
+#include "player.hpp"
 #include <cstdint>
-#include <cstdio>
 #include <raylib.h>
 #include <r3d/r3d.h>
 
@@ -27,6 +27,8 @@ namespace globals {
 
 	inline char newKey;
 	static char lastKey;
+
+	inline Player *player;
 
 	inline void togglePause() {
 		paused = !paused;

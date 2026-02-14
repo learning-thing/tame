@@ -10,3 +10,4 @@ var gravity = 2.5;
 var jumpPower = 1.0;
 var autoBunnyHop = false;
 var mSense = 2.0;
+var drawPos = false;

@@ -28,6 +28,7 @@ namespace convars {
 		set("jumpPower", 1.0f);
 		set("autoBunnyHop", true);
 		set("mSense", 2.0f);
+		set("drawPos", false);
     }
 
     inline void printAll() {

@@ -107,6 +107,7 @@ target_link_libraries(${PROJECT_NAME}
 	r3d
 	raylib
 	/home/benji/Dokumente/Programme/tame/src/lib/libmujs.a
+	/home/benji/Dokumente/Programme/tame/src/lib/libode.a
 )
 
 # On Windows, also link required system libs

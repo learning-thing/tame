@@ -164,8 +164,15 @@ void Player::walkMove() {
 		mv.m_vecVelocity += vec3(0, convars::getFloat("jumpPower"), 0);
 		//view.m_vecFxViewOffset_t += (Vector2){0, 10};
 	}
-	if (!m_bSprinting) accelerate(mv.m_outWishVel, mv.m_flMaxSpeed, (convars::getFloat("acceleration")));
-	else accelerate(mv.m_outWishVel, mv.m_flMaxSpeed, convars::getFloat("acceleration")*convars::getFloat("sprintFac"));
+	if (m_bSprinting) {
+		accelerate(mv.m_outWishVel, mv.m_flMaxSpeed, convars::getFloat("acceleration")*convars::getFloat("sprintFac"));
+		return;
+	}
+	if (m_bSliding) {
+		accelerate(mv.m_outWishVel, mv.m_flMaxSpeed*.25f, (convars::getFloat("acceleration")*.25f));
+		return;
+	}
+	accelerate(mv.m_outWishVel, mv.m_flMaxSpeed, (convars::getFloat("acceleration")));
 	//transform.translation.y = 0;
 }
 

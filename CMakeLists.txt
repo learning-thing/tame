@@ -55,7 +55,7 @@ FetchContent_MakeAvailable(assimp)
 # Configure r3d to use the just-built raylib/assimp instead of its vendored copies
 set(R3D_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(R3D_RAYLIB_VENDORED OFF CACHE BOOL "" FORCE)
-set(R3D_ASSIMP_VENDORED OFF CACHE BOOL "" FORCE)
+set(R3D_ASSIMP_VENDORED ON CACHE BOOL "" FORCE)
 
 # r3d requires Python for shader/asset embedding
 if(NOT DEFINED PYTHON_EXECUTABLE)

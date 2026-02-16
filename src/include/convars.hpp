@@ -1,4 +1,5 @@
 #pragma once
+#include <glm/ext/scalar_uint_sized.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <string>
 #include <unordered_map>
@@ -64,7 +65,7 @@ namespace convars {
         }
         return glm::vec3(0);
     }
-    inline bool getBool(const std::string& name) {
+    inline uint8 getBool(const std::string& name) {
         if (CONVARS.count(name)) {
             return std::get<bool>(CONVARS[name]);
         }

@@ -19,10 +19,7 @@
 #include "console.hpp"
 #include "ode/ode.h"
 
-
 int main(int argc, char **argv) {
-
-    //
     InitWindow(1920, 1080, "Tame engine/game");
     SetWindowMonitor(0);
     InitAudioDevice();
@@ -82,7 +79,6 @@ int main(int argc, char **argv) {
 
     SetExitKey(KEY_END);
 
-
     convars::init();
     globals::player = new Player;
 
@@ -93,7 +89,6 @@ int main(int argc, char **argv) {
     Console console;//Redirect everything into console from here
 
     convars::printAll();
-
     //auto world = dWorldCreate();
 
     Matrix modelMatrix = MatrixIdentity();
@@ -109,6 +104,7 @@ int main(int argc, char **argv) {
    		globals::player->viewUpdate(camera);
    		globals::update(camera);
      	//Dumbass Tick-system
+      	//Should put this in a seperate thread probably
       	console.update();
 	    if (globals::tick()) {
 			prevSpeed = speed;

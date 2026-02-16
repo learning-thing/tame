@@ -4,7 +4,7 @@ project(tame)
 set(CMAKE_CXX_STANDARD 17)
 
 # Always build static libs to avoid DLL issues on Windows
-set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
 # ------------------------------------------------------------
 # Dependencies via FetchContent
@@ -19,18 +19,16 @@ set(R3D_GIT_TAG master CACHE STRING "Git tag/branch for r3d")
 # Configure raylib similar to r3d's vendored setup to avoid symbol clashes
 set(CUSTOMIZE_BUILD ON CACHE BOOL "" FORCE)
 set(SUPPORT_FILEFORMAT_OBJ OFF CACHE BOOL "" FORCE)
-set(SUPPORT_FILEFORMAT_MTL ON CACHE BOOL "" FORCE)
+set(SUPPORT_FILEFORMAT_MTL OFF CACHE BOOL "" FORCE)
 set(SUPPORT_FILEFORMAT_IQM OFF CACHE BOOL "" FORCE)
-set(SUPPORT_FILEFORMAT_GLTF ON CACHE BOOL "" FORCE)
+set(SUPPORT_FILEFORMAT_GLTF OFF CACHE BOOL "" FORCE)
 set(SUPPORT_FILEFORMAT_VOX OFF CACHE BOOL "" FORCE)
 set(SUPPORT_FILEFORMAT_M3D OFF CACHE BOOL "" FORCE)
 set(SUPPORT_MESH_GENERATION OFF CACHE BOOL "" FORCE)
-set(SUPPORT_FILEFORMAT_HDR ON CACHE BOOL "" FORCE)
 
-# assimp knobs (leaner build; keep install/tests off)
 set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(ASSIMP_NO_EXPORT OFF CACHE BOOL "" FORCE)
-set(ASSIMP_INSTALL ON CACHE BOOL "" FORCE)
+set(ASSIMP_NO_EXPORT ON CACHE BOOL "" FORCE)
+set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
 
 # Fetch raylib
 message(STATUS "Downloading and configuring raylib...")

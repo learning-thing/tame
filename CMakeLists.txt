@@ -4,7 +4,7 @@ project(tame)
 set(CMAKE_CXX_STANDARD 17)
 
 # Always build static libs to avoid DLL issues on Windows
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 
 # ------------------------------------------------------------
 # Dependencies via FetchContent
@@ -54,7 +54,7 @@ FetchContent_MakeAvailable(assimp)
 
 # Configure r3d to use the just-built raylib/assimp instead of its vendored copies
 set(R3D_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(R3D_RAYLIB_VENDORED OFF CACHE BOOL "" FORCE)
+set(R3D_RAYLIB_VENDORED ON CACHE BOOL "" FORCE)
 set(R3D_ASSIMP_VENDORED ON CACHE BOOL "" FORCE)
 
 # r3d requires Python for shader/asset embedding

@@ -17,5 +17,5 @@ modules:
       sources:
           - type: git
             url: https://github.com/learning-thing/tame
-            commit: e745f07
+            commit: master
             dest: .

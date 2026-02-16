@@ -1,4 +1,5 @@
 #pragma once
+#include <glm/ext/scalar_uint_sized.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <math.h>
 #include <raylib.h>
@@ -20,10 +21,17 @@ struct PlayerView {
 };
 
 struct CMoveData {
-	float m_flMaxSpeed;
 	vec3 m_vecVelocity = vec3(0);
 	vec3 m_outWishVel = vec3(0);
 	Sound groundHitSound = LoadSound(SOUNDS_PATH "land.ogg");
+	//Convars
+	float m_flMaxSpeed;
+	uint8 autoBunnyHop;
+	float acceleration;
+	float sprintFac;
+
+	float maxAirSpeed;
+	float airAcceleration;
 };
 
 class Player {
@@ -51,6 +59,7 @@ class Player {
 	float distanceWalked;
 
 	void updatePlayer(Camera3D &camera);
+	void updateConvars();
 	void viewUpdate(Camera3D &camera);
 	void friction();
 	void fullWalkMove();

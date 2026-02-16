@@ -21,8 +21,6 @@
 
 
 int main(int argc, char **argv) {
-
-    //
     InitWindow(1920, 1080, "Tame engine/game");
     SetWindowMonitor(0);
     InitAudioDevice();
@@ -61,7 +59,7 @@ int main(int argc, char **argv) {
 
     // Load model
     R3D_SetTextureFilter(TEXTURE_FILTER_ANISOTROPIC_4X);
-    //R3D_Model model = R3D_LoadModel(RESOURCES_PATH "models/DamagedHelmet.glb");
+    R3D_Model model = R3D_LoadModel(RESOURCES_PATH "models/liminal.glb");
 
     // Setup camera
     Camera3D camera = {
@@ -82,23 +80,21 @@ int main(int argc, char **argv) {
 
     SetExitKey(KEY_END);
 
-
     convars::init();
-    globals::player = new Player;
 
-    tArray<hitBox> hitBoxes(10);
-    hitBoxes.pushBack(hitBox(globals::player));
+    globals::player = new Player;
+    convars::printAll();
 
     // Initialize window
     Console console;//Redirect everything into console from here
 
-    convars::printAll();
+    tArray<hitBox> hitBoxes(10);
+    hitBoxes.pushBack(hitBox(globals::player));
 
     //auto world = dWorldCreate();
-
     Matrix modelMatrix = MatrixIdentity();
     modelMatrix = MatrixMultiply(MatrixIdentity(), MatrixScale(50, 50, 50));
-    modelMatrix = MatrixMultiply(modelMatrix, MatrixTranslate(0, 25, 0));
+    modelMatrix = MatrixMultiply(modelMatrix, MatrixTranslate(0, -50, 0));
 
     // Main loop
     float speed = 0;
@@ -127,8 +123,8 @@ int main(int argc, char **argv) {
         BeginDrawing();
             ClearBackground(BLACK);
             R3D_Begin(camera);
-                R3D_DrawMesh(groundPlane, mat, {0, -10, 0}, 1.0f);
-                //R3D_DrawModelPro(model, modelMatrix);
+                //R3D_DrawMesh(groundPlane, mat, {0, -10, 0}, 1.0f);
+                R3D_DrawModelPro(model, modelMatrix);
             R3D_End();
             DrawCircle(GetScreenWidth()/2, GetScreenHeight()/2, 2, BLACK);
             DrawCircle(GetScreenWidth()/2, GetScreenHeight()/2, 1, WHITE);

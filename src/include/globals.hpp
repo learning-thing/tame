@@ -14,7 +14,8 @@ namespace globals {
 		KEY_CONSOLE_TOGGLE = (1 << 5)
 	};
 
-	inline uint64_t lastTickKeys = 0;
+	inline uint64_t tickKeys = 0;
+	inline uint64_t prevTickKeys = 0;
 
 	inline const unsigned int TICKRATE = 100;
 	inline float tickTime = 0;
@@ -46,26 +47,12 @@ namespace globals {
 		tickTime+=frametime;
 		if (IsKeyPressed(KEY_ESCAPE) && !consoleActive) togglePause();
 
-		//update tick keys
-		lastKey = newKey;
-		newKey = GetCharPressed();
-		//if (lastKey != newKey) printf("new key: %d\n", newKey);
-		switch (newKey) {
-			case 't':
-				lastTickKeys |= KEY_CONSOLE_TOGGLE;
-				break;
-			case ' ':
-				lastTickKeys |= KEY_JUMP;
-				//newKey = 0;
-				break;
-			default:
-				//printf("KEY PRESSED: %d");
-				break;
-		}
+		tickKeys |= KEY_JUMP * IsKeyDown(KEY_SPACE);
+		tickKeys |= KEY_CONSOLE_TOGGLE * IsKeyDown(KEY_T);
 	}
 
 	inline bool keyPressed(tickedKeys key) {
-		return lastTickKeys & key;
+		return tickKeys & key && !(prevTickKeys & key);
 	}
 
 	inline bool tick() {
@@ -74,8 +61,9 @@ namespace globals {
 	}
 
 	inline void newTick() {
-		tickTime = 0;
+		tickTime = 0.0f;
 		ticksDone++;
-		lastTickKeys = 0;
+		prevTickKeys = tickKeys;
+		tickKeys = 0;
 	}
 }

@@ -1,10 +1,11 @@
 #pragma once
 #include <iostream>
+#include <istream>
 #include <raylib.h>
+#include <streambuf>
 #include <string>
 #include <sstream>
 #include "convars.hpp"
-#include "player.hpp"
 #include "utils.hpp"
 #include "globals.hpp"
 #include "mujs/mujs.h"
@@ -24,6 +25,7 @@ class Console {
 	int histPos = 0;
 	std::stringstream coutbuffer;
 	std::streambuf *old = std::cout.rdbuf(coutbuffer.rdbuf());
+	std::istream strem(coutbuffer.rdbuf());
 	float backSpaceDown = 0;
 
 	void updateConvars() {
@@ -32,17 +34,19 @@ class Console {
 			//printf("Setting %s to ", it.first.c_str());
 			switch (it.second.index()) {
 				case 1:
-					convars::set(it.first, (float)js_tonumber(runtime, -1));
+					it.second = (float)js_tonumber(runtime, -1);
 					//printf("%f\n", convars::getFloat(it.first));
 					break;
 				case 3:
-					convars::set(it.first, (bool)js_toboolean(runtime, -1));
+					it.second = (bool)js_toboolean(runtime, -1);
 					//printf("%s\n", convars::getBool(it.first) ? "true" : "false");
 					break;
 				default:
 					break;
 			}
+			js_pop(runtime, 1);
 		}
+		convars::push();
 		//convars::printAll();
 	}
 
@@ -69,6 +73,7 @@ class Console {
 		registerJSFunc(JsB_prints, "prints");
 		js_dofile(runtime, SCRIPTS_PATH "start.js");
 		updateConvars();
+		convars::push();
 	}
 
 	~Console() {
@@ -77,8 +82,9 @@ class Console {
 
 	void update() {
 		if (!hidden) {
-			if (globals::newKey != 0) {
-				cmdline += globals::newKey;
+			const char newKey = GetCharPressed();
+			if (newKey != 0) {
+				cmdline += newKey;
 				//printf("%c\n", globals::newKey);
 			}
 			if (IsKeyPressed(KEY_ESCAPE)) {

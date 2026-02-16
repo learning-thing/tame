@@ -11,19 +11,15 @@
 Player::Player() {
 	health = 100;
 	transform.translation = {-1, 1, 0};
-	mv.m_flMaxSpeed = convars::getFloat("maxSpeed");
-	view.offset = vec3(0, convars::getFloat("viewHeight"), 0);
-	m_surfaceFriction = convars::getFloat("groundFriction");
+	updateConvars();
 	m_bOnGround = true;
 	m_bSliding = false;
 	view.targFov = 70;
 	DisableCursor();
-	mSense = convars::getFloat("mSense");
 }
 
 void Player::updatePlayer(Camera3D &camera) {
 	if (globals::paused) return;
-	mSense = convars::getFloat("mSense")/1000;
 	//Sliding logic
 	if (IsKeyDown(KEY_LEFT_CONTROL) && !m_bDucked && !globals::consoleActive) {
 		m_bSliding = true;
@@ -96,8 +92,6 @@ void Player::friction() {
 	float	friction = 0;
 	float	drop = 0;
 
-	m_surfaceFriction = convars::getFloat("groundFriction");
-
 	//Calculate speed
 	speed = glm::length(mv.m_vecVelocity);
 
@@ -105,6 +99,7 @@ void Player::friction() {
 	if (speed < 0.001f) { mv.m_vecVelocity = vec3(0, 0, 0); return; }
 
 	if (isOnGround) { friction = m_surfaceFriction; }
+	else friction = 0;
 
 	control = (speed < 0.01f) ? 0.01f : speed;
 	if (!m_bSliding) { drop += control * friction * globals::tickTime; }
@@ -125,7 +120,7 @@ void Player::fullWalkMove() {
 
 void Player::walkMove() {
 	//vec3 wishDir;
-	vec3 wishVel;
+	vec3 wishVel = vec3(0);
 	//float spd;
 	//float fmove, smove;
 	//int wishSpeed = 320;
@@ -165,14 +160,14 @@ void Player::walkMove() {
 		//view.m_vecFxViewOffset_t += (Vector2){0, 10};
 	}
 	if (m_bSprinting) {
-		accelerate(mv.m_outWishVel, mv.m_flMaxSpeed, convars::getFloat("acceleration")*convars::getFloat("sprintFac"));
+		accelerate(mv.m_outWishVel, mv.m_flMaxSpeed, mv.acceleration*mv.sprintFac);
 		return;
 	}
 	if (m_bSliding) {
-		accelerate(mv.m_outWishVel, mv.m_flMaxSpeed*.25f, (convars::getFloat("acceleration")*.25f));
+		accelerate(mv.m_outWishVel, mv.m_flMaxSpeed*.25f, (mv.acceleration*.25f));
 		return;
 	}
-	accelerate(mv.m_outWishVel, mv.m_flMaxSpeed, (convars::getFloat("acceleration")));
+	accelerate(mv.m_outWishVel, mv.m_flMaxSpeed, mv.acceleration);
 	//transform.translation.y = 0;
 }
 
@@ -189,7 +184,7 @@ void Player::accelerate(vec3 &wishdir, float wishSpeed, float accel) {
 	if ( addSpeed <= 0) return;
 
 	//Determine amount of acceleration
-	accelSpeed = accel * globals::tickTime * wishSpeed * m_surfaceFriction;
+	accelSpeed = accel * globals::tickTime * wishSpeed;
 
 	//Cap it
 	if (accelSpeed > addSpeed) accelSpeed = addSpeed;
@@ -201,7 +196,7 @@ void Player::accelerate(vec3 &wishdir, float wishSpeed, float accel) {
 }
 
 void Player::airMove() {
-	vec3 wishVel;
+	vec3 wishVel = vec3(0, 0, 0);
 	vec3 strafeDir = cross(view.lookDir, vec3(0, 1, 0));
 
 	if (IsKeyDown(KEY_W)) { wishVel += view.lookDir; }
@@ -211,13 +206,18 @@ void Player::airMove() {
 
 	wishVel.y = 0;
 
-	if (glm::length(wishVel) > 0) {
-		mv.m_outWishVel = glm::normalize(wishVel);
+	if (glm::length(wishVel) > 0.0001f) {
+	    mv.m_outWishVel = glm::normalize(wishVel);
 	} else {
-		mv.m_outWishVel = vec3(0);
+	    mv.m_outWishVel = vec3(0.0f);
 	}
 
-	airAccelerate(mv.m_outWishVel, convars::getFloat("maxAirSpeed"), convars::getFloat("airAcceleration"));
+	if (m_bSliding) {
+		airAccelerate(mv.m_outWishVel, mv.maxAirSpeed*.25f, mv.airAcceleration*.25f);
+		return;
+	}
+	print(wishVel);
+	airAccelerate(mv.m_outWishVel, mv.maxAirSpeed, mv.airAcceleration);
 	//transform.translation.y = 0;
 }
 
@@ -234,7 +234,7 @@ void Player::airAccelerate(vec3 &wishdir, float wishSpeed, float accel) {
 	if ( addSpeed <= 0) return;
 
 	//Determine amount of acceleration
-	accelSpeed = accel * globals::tickTime * wishSpeed * m_surfaceFriction;
+	accelSpeed = accel * globals::tickTime * wishSpeed;
 
 	//Cap it
 	if (accelSpeed > addSpeed) accelSpeed = addSpeed;
@@ -243,11 +243,24 @@ void Player::airAccelerate(vec3 &wishdir, float wishSpeed, float accel) {
 	mv.m_vecVelocity += wishdir * accelSpeed;
 }
 
-void Player::addGravity() {
-	float ent_gravity = convars::getFloat("gravity");
-
+void Player::addGravity() {;
 	// Add gravity incorrectly
-	mv.m_vecVelocity.y -= (ent_gravity * globals::tickTime);
+	mv.m_vecVelocity.y -= (m_flGravity * globals::tickTime);
+}
+
+void Player::updateConvars() {
+	mv.m_flMaxSpeed = convars::getFloat("maxSpeed");
+	m_surfaceFriction = convars::getFloat("groundFriction");
+	mSense = convars::getFloat("mSense")/1000;
+	view.offset = vec3(0, convars::getFloat("viewHeight"), 0);
+	m_flGravity = convars::getFloat("gravity");
+	mv.sprintFac = convars::getFloat("sprintFac");
+	mv.acceleration = convars::getFloat("acceleration");
+	mv.maxAirSpeed = convars::getFloat("maxAirSpeed");
+	mv.airAcceleration = convars::getFloat("airAcceleration");
+	/*
+	mv.autoBunnyHop = convars::getBool("autoBunnyHop");
+	 */
 }
 
 bool Player::canAccelerate() {

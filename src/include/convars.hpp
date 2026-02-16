@@ -1,9 +1,11 @@
 #pragma once
 #include <glm/ext/vector_float3.hpp>
+#include <glm/fwd.hpp>
 #include <string>
 #include <unordered_map>
 #include <variant>
 #include <iostream>
+#include "globals.hpp"
 #include "utils.hpp"
 
 namespace convars {
@@ -69,5 +71,9 @@ namespace convars {
             return std::get<bool>(CONVARS[name]);
         }
         return false;
+    }
+    //make tell stuff to update the convars
+    inline void push() {
+   		globals::player->updateConvars();
     }
 }

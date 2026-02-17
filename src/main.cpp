@@ -4,6 +4,7 @@
 #include "ode/collision.h"
 #include "ode/common.h"
 #include "ode/objects.h"
+#include "ode/odecpp.h"
 #include "r3d/r3d_ambient_map.h"
 #include "r3d/r3d_draw.h"
 #include "r3d/r3d_environment.h"
@@ -129,7 +130,7 @@ int main(int argc, char **argv) {
     hitBoxes.pushBack(hitBox(globals::player));
 
     dWorldID world = dWorldCreate();
-    //dCreateGeom()
+    dBodyID playBody = dBodyCreate(world);
 
     Matrix modelMatrix = MatrixIdentity();
     modelMatrix = MatrixMultiply(MatrixIdentity(), MatrixScale(50, 50, 50));

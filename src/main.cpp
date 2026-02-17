@@ -129,9 +129,6 @@ int main(int argc, char **argv) {
     tArray<hitBox> hitBoxes(10);
     hitBoxes.pushBack(hitBox(globals::player));
 
-    dWorldID world = dWorldCreate();
-    dBodyID playBody = dBodyCreate(world);
-
     Matrix modelMatrix = MatrixIdentity();
     modelMatrix = MatrixMultiply(MatrixIdentity(), MatrixScale(50, 50, 50));
     modelMatrix = MatrixMultiply(modelMatrix, MatrixTranslate(0, -50, 0));

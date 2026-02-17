@@ -1,7 +1,7 @@
 var viewHeight = 10.0;
-var maxSpeed = 2.0;
+var maxSpeed = 3.0;
 var gravity = 3.6;
-var acceleration = 8.0;
+var acceleration = 10.0;
 var sprintFac = 2.25;
 var airAcceleration = 44;
 var groundFriction = 8.0;
@@ -11,3 +11,5 @@ var jumpPower = 1.0;
 var autoBunnyHop = true;
 var mSense = 2.0;
 var drawPos = false;
+var exposure = 0.5;
+var bloomStrength = 75;

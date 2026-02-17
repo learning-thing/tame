@@ -55,9 +55,9 @@ void Player::viewUpdate(Camera3D &camera) {
 	//io::print((ZString)textFormat("View rotation: %f\n", view.rotation.y));
 
 	if (m_bSliding) {
-		view.offset.y = convars::getFloat("viewHeight")/5;
+		view.offset.y = view.viewHeight/10;
 	} else {
-		view.offset.y = convars::getFloat("viewHeight");
+		view.offset.y = view.viewHeight;
 	}
 
 	view.lookDir = vec3(sin(-viewRotation.x)*sin(viewRotation.y),
@@ -132,7 +132,7 @@ void Player::walkMove() {
 			wishVel += view.lookDir;
 			if (IsKeyDown(KEY_LEFT_SHIFT)) {
 				m_bSprinting = true;
-				printf("Started sprinting\n");
+				//printf("Started sprinting\n");
 			}
 		} else {
 			m_bSprinting = false;
@@ -155,8 +155,8 @@ void Player::walkMove() {
 	//Apply friction
 	friction();
 	//Jump
-	if (!globals::consoleActive) if (globals::keyPressed(globals::KEY_JUMP) || (convars::getBool("autoBunnyHop") && IsKeyDown(KEY_SPACE))) {
-		mv.m_vecVelocity += vec3(0, convars::getFloat("jumpPower"), 0);
+	if (!globals::consoleActive) if (globals::keyPressed(globals::KEY_JUMP) || (mv.autoBunnyHop && IsKeyDown(KEY_SPACE))) {
+		mv.m_vecVelocity.y += mv.jumpPower;
 		//view.m_vecFxViewOffset_t += (Vector2){0, 10};
 	}
 	if (m_bSprinting) {
@@ -216,7 +216,7 @@ void Player::airMove() {
 		airAccelerate(mv.m_outWishVel, mv.maxAirSpeed*.25f, mv.airAcceleration*.25f);
 		return;
 	}
-	print(wishVel);
+	//print(wishVel);
 	airAccelerate(mv.m_outWishVel, mv.maxAirSpeed, mv.airAcceleration);
 	//transform.translation.y = 0;
 }
@@ -258,11 +258,19 @@ void Player::updateConvars() {
 	mv.acceleration = convars::getFloat("acceleration");
 	mv.maxAirSpeed = convars::getFloat("maxAirSpeed");
 	mv.airAcceleration = convars::getFloat("airAcceleration");
-	/*
 	mv.autoBunnyHop = convars::getBool("autoBunnyHop");
-	 */
+	mv.jumpPower = convars::getFloat("jumpPower");
+	view.viewHeight = convars::getFloat("viewHeight");
 }
 
 bool Player::canAccelerate() {
 	return true;
+}
+
+float Player::getSpeed() const {
+	return glm::length(mv.m_vecVelocity);
+}
+
+Vector3 Player::getPos() const {
+	return transform.translation;
 }

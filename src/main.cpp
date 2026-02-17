@@ -1,12 +1,17 @@
 #include "collision.hpp"
 #include "convars.hpp"
 #include "globals.hpp"
+#include "ode/collision.h"
+#include "ode/common.h"
 #include "ode/objects.h"
 #include "r3d/r3d_ambient_map.h"
 #include "r3d/r3d_draw.h"
 #include "r3d/r3d_environment.h"
 #include "r3d/r3d_material.h"
 #include "r3d/r3d_mesh.h"
+#include <atomic>
+#include <bits/chrono.h>
+#include <cstdio>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/geometric.hpp>
 #include <iostream>
@@ -18,7 +23,38 @@
 #include "player.hpp"
 #include "console.hpp"
 #include "ode/ode.h"
+#include <thread>
 
+using namespace std::chrono_literals;
+
+// Flag, um den Thread sauber zu beenden
+std::atomic<bool> gameRunning(true);
+
+void PhysicsTickLoop(Player* player, Camera3D& camera, tArray<hitBox>& hitBoxes, Console& console) {
+    // 60 Ticks pro Sekunde = ~16.67ms pro Tick
+    const auto tickrate = 8ms;
+
+    while (gameRunning) {
+        auto startTime = std::chrono::steady_clock::now();
+
+       	console.update();
+
+        // Hier wird die Logik ausgeführt, die vorher in globals::tick() stand
+        if (!globals::paused) {
+            player->updatePlayer(camera);
+            hitBoxes[0].update();
+            globals::newTick();
+        }
+
+        auto endTime = std::chrono::steady_clock::now();
+        auto duration = endTime - startTime;
+
+        // Warten, bis der nächste Tick fällig ist
+        if (duration < tickrate) {
+            std::this_thread::sleep_for(tickrate - duration);
+        }
+    }
+}
 
 int main(int argc, char **argv) {
     InitWindow(1920, 1080, "Tame engine/game");
@@ -46,27 +82,22 @@ int main(int argc, char **argv) {
     R3D_ENVIRONMENT_SET(background.sky, cubemap);
 
     // Setup bloom
-    //R3D_ENVIRONMENT_SET(bloom.mode, R3D_BLOOM_MIX);
-    //R3D_ENVIRONMENT_SET(bloom.intensity, 0.02f);
+    R3D_ENVIRONMENT_SET(bloom.mode, R3D_BLOOM_MIX);
+    R3D_ENVIRONMENT_SET(bloom.intensity, 0.075f);
 
     R3D_ENVIRONMENT_SET(background.sky, skyProcedural);
     R3D_ENVIRONMENT_SET(ambient.map, ambientProcedural);
 
-    // Setup tonemapping
-    R3D_ENVIRONMENT_SET(tonemap.mode, R3D_TONEMAP_ACES);
-    R3D_ENVIRONMENT_SET(tonemap.exposure, 0.5f);
-    R3D_ENVIRONMENT_SET(tonemap.white, 4.0f);
-
     // Load model
     R3D_SetTextureFilter(TEXTURE_FILTER_ANISOTROPIC_4X);
-    R3D_Model model = R3D_LoadModel(RESOURCES_PATH "models/liminal.glb");
+    globals::model = R3D_LoadModel(MODELS_PATH "brutal.glb");
 
     // Setup camera
     Camera3D camera = {
-        .position = {0, 4, 20.5f},
-        .target = {0, 0, 0},
-        .up = {0, 1, 0},
-        .fovy = 60
+        {0, 4, 20.5f},
+        {0, 0, 0},
+        {0, 1, 0},
+        1
     };
 
     ToggleFullscreen();
@@ -82,6 +113,12 @@ int main(int argc, char **argv) {
 
     convars::init();
 
+    // Setup tonemapping
+    R3D_ENVIRONMENT_SET(tonemap.mode, R3D_TONEMAP_ACES);
+    printf("%f", convars::getFloat("exposure"));
+    R3D_ENVIRONMENT_SET(tonemap.exposure, convars::getFloat("exposure"));
+    R3D_ENVIRONMENT_SET(tonemap.white, 4.0f);
+
     globals::player = new Player;
     convars::printAll();
 
@@ -91,7 +128,9 @@ int main(int argc, char **argv) {
     tArray<hitBox> hitBoxes(10);
     hitBoxes.pushBack(hitBox(globals::player));
 
-    //auto world = dWorldCreate();
+    dWorldID world = dWorldCreate();
+    //dCreateGeom()
+
     Matrix modelMatrix = MatrixIdentity();
     modelMatrix = MatrixMultiply(MatrixIdentity(), MatrixScale(50, 50, 50));
     modelMatrix = MatrixMultiply(modelMatrix, MatrixTranslate(0, -50, 0));
@@ -101,19 +140,15 @@ int main(int argc, char **argv) {
     float prevSpeed = 0;
     bool limitFPS = false;
 
+    // Thread starten
+    // Wir übergeben die Referenzen/Pointer, die für die Physik nötig sind
+    std::thread physicsThread(PhysicsTickLoop, globals::player, std::ref(camera), std::ref(hitBoxes), std::ref(console));
+
     while (!WindowShouldClose()) {
    		globals::player->viewUpdate(camera);
    		globals::update(camera);
-     	//Dumbass Tick-system
-      	console.update();
-	    if (globals::tick()) {
-			prevSpeed = speed;
-			globals::player->updatePlayer(camera);
-			hitBoxes[0].update();
-			speed = glm::length(globals::player->mv.m_vecVelocity);
-			globals::newTick();
-			//std::cout << playerHitBox.getChunk().x << " " << playerHitBox.getChunk().y << "\n";
-	    }
+     	prevSpeed = speed;
+      	speed = globals::player->getSpeed();
 
 		if (IsKeyPressed(KEY_Q)) {
 			limitFPS = !limitFPS;
@@ -124,24 +159,29 @@ int main(int argc, char **argv) {
             ClearBackground(BLACK);
             R3D_Begin(camera);
                 //R3D_DrawMesh(groundPlane, mat, {0, -10, 0}, 1.0f);
-                R3D_DrawModelPro(model, modelMatrix);
+                R3D_DrawModelPro(globals::model, modelMatrix);
             R3D_End();
             DrawCircle(GetScreenWidth()/2, GetScreenHeight()/2, 2, BLACK);
             DrawCircle(GetScreenWidth()/2, GetScreenHeight()/2, 1, WHITE);
             DrawFPS(10, 10);
 
             if (convars::getBool("drawPos")) {
-            	DrawText(TextFormat("Chunk: %d %d\nPosition: %f %f\nSpeed: %02f", hitBoxes[0].getChunk().x, hitBoxes[0].getChunk().y, globals::player->transform.translation.x, globals::player->transform.translation.y, speed), 10, 100, 20, (prevSpeed < speed) ? GREEN : RED);
+            	DrawText(TextFormat("Chunk: %d %d\nPosition: \n%.2f \n%.2f\nSpeed: %02f", hitBoxes[0].getChunk().x, hitBoxes[0].getChunk().y, globals::player->transform.translation.x, globals::player->transform.translation.y, speed), 10, 100, 20, (prevSpeed < speed) ? GREEN : RED);
             }
             console.draw();
         EndDrawing();
     }
-
     // Cleanup
+    gameRunning = false;    // Thread signalisieren zu stoppen
+    if (physicsThread.joinable()) {
+        physicsThread.join(); // Warten, bis der Thread fertig ist
+    }
     //R3D_UnloadModel(model, true);
     R3D_UnloadAmbientMap(ambientProcedural);
     R3D_UnloadCubemap(cubemap);
     R3D_Close();
+
+    dWorldDestroy(world);
 
     CloseAudioDevice();
     CloseWindow();

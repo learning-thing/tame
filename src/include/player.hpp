@@ -17,7 +17,8 @@ struct PlayerView {
 	vec2 m_vecFxViewOffset = vec2(0);//Actual offset from effects
 	vec2 m_vecFxViewOffset_t = vec2(0);//interpolated+#
 	vec3 cameraTilt = vec3(0);
-	float targFov = 0;
+	float targFov = 70;
+	float viewHeight;
 };
 
 struct CMoveData {
@@ -29,7 +30,7 @@ struct CMoveData {
 	uint8 autoBunnyHop;
 	float acceleration;
 	float sprintFac;
-
+	float jumpPower;
 	float maxAirSpeed;
 	float airAcceleration;
 };
@@ -69,6 +70,8 @@ class Player {
 	void airAccelerate(vec3 &wishdir, float wishSpeed, float accel);
 	void addGravity();
 	bool canAccelerate();
+	float getSpeed() const;
+	Vector3 getPos() const;
 
 	Player();
 	~Player() = default;

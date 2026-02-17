@@ -19,7 +19,7 @@ namespace convars {
 
     inline void init() {
         set("viewHeight", 10.0f);
-        set("maxSpeed", 2.0f);
+        set("maxSpeed", 16.0f);
         set("gravity", 3.6f);
 		set("acceleration", 1.0f);
 		set("sprintFac", 2.25f);
@@ -31,6 +31,7 @@ namespace convars {
 		set("autoBunnyHop", true);
 		set("mSense", 2.0f);
 		set("drawPos", false);
+		set("exposure", 0.5f);
     }
 
     inline void printAll() {
@@ -74,6 +75,10 @@ namespace convars {
     }
     //make tell stuff to update the convars
     inline void push() {
+    	R3D_ENVIRONMENT_SET(tonemap.exposure, convars::getFloat("exposure"));
+	     // Setup bloom
+
+	     R3D_ENVIRONMENT_SET(bloom.intensity, convars::getFloat("bloomStrength")*.001);
    		globals::player->updateConvars();
     }
 }

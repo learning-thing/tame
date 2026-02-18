@@ -6,6 +6,8 @@
 #include "globals.hpp"
 #include "player.hpp"
 #include "convars.hpp"
+#include "r3d/r3d_kinematics.h"
+#include "r3d/r3d_mesh_data.h"
 #include "utils.hpp"
 
 Player::Player() {
@@ -28,14 +30,15 @@ void Player::updatePlayer(Camera3D &camera) {
 	}
 
 	fullWalkMove();
-	transform.translation += mv.m_vecVelocity * globals::tickTime*60.0f;
+	transform.translation += mv.m_vecVelocity * globals::tickTime*10.0f;
+
+	updateGround();
 
 	//Add addGravity
-	if (transform.translation.y > 0) { addGravity(); m_bOnGround = false; }
-	if (transform.translation.y <= 0)  {
-		m_bOnGround = true;
+	if (!m_bOnGround) { addGravity();}
+	else {
 		if (m_bOnGround && !m_bWasOnGround)  PlaySound(mv.groundHitSound);
-		transform.translation.y = 0;
+		//transform.translation.y += 1;
 		mv.m_vecVelocity.y = 0;
 	}
 	m_bWasOnGround = m_bOnGround;
@@ -71,23 +74,15 @@ void Player::viewUpdate(Camera3D &camera) {
 	distanceWalked += speed;
 	//  -- Camera effects
 	// fov
-	view.targFov = 70 + abs(glm::dot(vec3(view.lookDir.x, 0, view.lookDir.z), vec3(mv.m_vecVelocity.x, 0, mv.m_vecVelocity.z)))*4;
-	camera.fovy += (view.targFov-camera.fovy)*globals::frametime*20;
+	view.targFov = 70 + abs(glm::dot(vec3(view.lookDir.x, 0, view.lookDir.z), vec3(mv.m_vecVelocity.x, 0, mv.m_vecVelocity.z)))*2;
+	camera.fovy += (view.targFov-camera.fovy)*globals::frametime*5;
 
 	// Camera "bounce"
-	/*
-	if (m_bSprinting) {
-		view.m_vecFxViewOffset = vec2(sin(distanceWalked*0.005f), abs(cos(distanceWalked*0.01f)));
-	} else {
-		view.m_vecFxViewOffset = vec2(0);
-	} */
 	view.m_vecFxViewOffset_t += (view.m_vecFxViewOffset-view.m_vecFxViewOffset_t)*globals::frametime*10.0f;
 	camera.target = camera.position+view.lookDir;
 }
 
 void Player::friction() {
-	bool isOnGround = true;
-
 	float	speed = 0, newspeed = 0, control = 0;
 	float	friction = 0;
 	float	drop = 0;
@@ -98,8 +93,8 @@ void Player::friction() {
 	if (speed < 1.0f) { m_bSprinting = false; }
 	if (speed < 0.001f) { mv.m_vecVelocity = vec3(0, 0, 0); return; }
 
-	if (isOnGround) { friction = m_surfaceFriction; }
-	else friction = 0;
+	friction = m_surfaceFriction;
+	//friction = 0;
 
 	control = (speed < 0.01f) ? 0.01f : speed;
 	if (!m_bSliding) { drop += control * friction * globals::tickTime; }
@@ -168,7 +163,6 @@ void Player::walkMove() {
 		return;
 	}
 	accelerate(mv.m_outWishVel, mv.m_flMaxSpeed, mv.acceleration);
-	//transform.translation.y = 0;
 }
 
 void Player::accelerate(vec3 &wishdir, float wishSpeed, float accel) {
@@ -191,8 +185,6 @@ void Player::accelerate(vec3 &wishdir, float wishSpeed, float accel) {
 
 	//Adjust pmove vel
 	mv.m_vecVelocity += wishdir * accelSpeed;
-	//ZString dbgMsg = (ZString)textFormat("WishDir: %f %f %f\nCurrentSpeed: %f\nAddspeed: %f\nAccel speed: %f\nOutWishVel: %f %f %f\nPosition: %f %f %f\n", wishdir.x, wishdir.y, wishdir.z, currentSpeed, addSpeed, accelSpeed, mv.m_outWishVel.x, mv.m_outWishVel.y, mv.m_outWishVel.z, transform.translation.x, transform.translation.y, transform.translation.z);
-	//io::print(dbgMsg);
 }
 
 void Player::airMove() {
@@ -244,7 +236,7 @@ void Player::airAccelerate(vec3 &wishdir, float wishSpeed, float accel) {
 }
 
 void Player::addGravity() {;
-	// Add gravity incorrectly
+	// Add gravity incorrectly (could be better idk)
 	mv.m_vecVelocity.y -= (m_flGravity * globals::tickTime);
 }
 
@@ -263,12 +255,31 @@ void Player::updateConvars() {
 	view.viewHeight = convars::getFloat("viewHeight");
 }
 
-bool Player::canAccelerate() {
-	return true;
+void Player::updateGround() {
+	groundCheck.colray = (Ray){
+		.position = transform.translation+(Vector3){0, view.viewHeight, 0},
+		.direction = (Vector3){0, -1, 0},
+	};
+	groundCheck.groundCollision = R3D_RaycastModel(groundCheck.colray, globals::model, globals::modelMatrix);
+
+	//std::cout << groundCheck.groundCollision.distance << "\n";
+	if (groundCheck.groundCollision.hit) {
+		print(groundCheck.groundCollision.point);
+		if (groundCheck.groundCollision.point.y >= transform.translation.y) {
+			m_bOnGround = true;
+			transform.translation.y = groundCheck.groundCollision.point.y;
+			return;
+		}
+		m_bOnGround = false;
+	}
 }
 
+bool Player::canAccelerate() { return true; }
+
 float Player::getSpeed() const {
-	return glm::length(mv.m_vecVelocity);
+	vec3 s = mv.m_vecVelocity;
+	s.y = 0;
+	return glm::length(s);
 }
 
 Vector3 Player::getPos() const {

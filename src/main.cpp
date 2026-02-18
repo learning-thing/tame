@@ -8,6 +8,8 @@
 #include "r3d/r3d_ambient_map.h"
 #include "r3d/r3d_draw.h"
 #include "r3d/r3d_environment.h"
+#include "r3d/r3d_importer.h"
+#include "r3d/r3d_lighting.h"
 #include "r3d/r3d_material.h"
 #include "r3d/r3d_mesh.h"
 #include <atomic>
@@ -19,6 +21,7 @@
 #include <r3d/r3d.h>
 #include <raylib.h>
 #include <raymath.h>
+#include "r3d/r3d_model.h"
 #include "tArray.hpp"
 #include "utils.hpp"
 #include "player.hpp"
@@ -37,8 +40,6 @@ void PhysicsTickLoop(Player* player, Camera3D& camera, tArray<hitBox>& hitBoxes,
 
     while (gameRunning) {
         auto startTime = std::chrono::steady_clock::now();
-
-       	console.update();
 
         // Hier wird die Logik ausgeführt, die vorher in globals::tick() stand
         if (!globals::paused) {
@@ -91,22 +92,22 @@ int main(int argc, char **argv) {
 
     // Load model
     R3D_SetTextureFilter(TEXTURE_FILTER_ANISOTROPIC_4X);
-    globals::model = R3D_LoadModel(MODELS_PATH "brutal.glb");
+    globals::model = R3D_LoadModelEx(MODELS_PATH "brutal.glb", R3D_IMPORT_MESH_DATA);
 
     // Setup camera
     Camera3D camera = {
         {0, 4, 20.5f},
         {0, 0, 0},
         {0, 1, 0},
-        1
+        50
     };
 
     ToggleFullscreen();
 
-    R3D_Material mat = R3D_GetDefaultMaterial();
-    mat.albedo = R3D_LoadAlbedoMap(MATERIALS_PATH "ground/albedo.jpg", WHITE);
-    mat.normal = R3D_LoadNormalMap(MATERIALS_PATH "ground/normal.jpg", 1.0f);
-    mat.uvScale = {100.f, 100.f};
+    //R3D_Material mat = R3D_GetDefaultMaterial();
+    //mat.albedo = R3D_LoadAlbedoMap(MATERIALS_PATH "ground/albedo.jpg", WHITE);
+    //mat.normal = R3D_LoadNormalMap(MATERIALS_PATH "ground/normal.jpg", 100.0f);
+    //mat.uvScale = {100.f, 100.f};
 
     R3D_Mesh groundPlane = R3D_GenMeshPlane(1000, 1000, 10, 10);
 
@@ -129,24 +130,30 @@ int main(int argc, char **argv) {
     tArray<hitBox> hitBoxes(10);
     hitBoxes.pushBack(hitBox(globals::player));
 
-    Matrix modelMatrix = MatrixIdentity();
-    modelMatrix = MatrixMultiply(MatrixIdentity(), MatrixScale(50, 50, 50));
-    modelMatrix = MatrixMultiply(modelMatrix, MatrixTranslate(0, -50, 0));
-
     // Main loop
     float speed = 0;
     float prevSpeed = 0;
     bool limitFPS = false;
 
-    // Thread starten
-    // Wir übergeben die Referenzen/Pointer, die für die Physik nötig sind
+    // Create directional light with shadows
+    R3D_Light sun = R3D_CreateLight(R3D_LIGHT_DIR);
+    R3D_SetLightDirection(sun, (Vector3){-1, -1, -1});
+    R3D_SetLightActive(sun, true);
+    R3D_SetLightRange(sun, 160.0f);
+    R3D_SetShadowSoftness(sun, 2.0f);
+    R3D_SetShadowDepthBias(sun, 0.01f);
+    R3D_EnableShadow(sun);
+    //globals::modelMatrix = MatrixMultiply(MatrixIdentity(), MatrixScale(10, 10, 10));
+    //globals::modelMatrix = MatrixMultiply(globals::modelMatrix, MatrixTranslate(0, -30, 0));
+
+
+    // Seperate tick thread
     std::thread physicsThread(PhysicsTickLoop, globals::player, std::ref(camera), std::ref(hitBoxes), std::ref(console));
 
     while (!WindowShouldClose()) {
    		globals::player->viewUpdate(camera);
+    	console.update();
    		globals::update(camera);
-     	prevSpeed = speed;
-      	speed = globals::player->getSpeed();
 
 		if (IsKeyPressed(KEY_Q)) {
 			limitFPS = !limitFPS;
@@ -157,14 +164,16 @@ int main(int argc, char **argv) {
             ClearBackground(BLACK);
             R3D_Begin(camera);
                 //R3D_DrawMesh(groundPlane, mat, {0, -10, 0}, 1.0f);
-                R3D_DrawModelPro(globals::model, modelMatrix);
+                R3D_DrawModelPro(globals::model, globals::modelMatrix);
             R3D_End();
             DrawCircle(GetScreenWidth()/2, GetScreenHeight()/2, 2, BLACK);
             DrawCircle(GetScreenWidth()/2, GetScreenHeight()/2, 1, WHITE);
             DrawFPS(10, 10);
 
             if (convars::getBool("drawPos")) {
+            	speed = globals::player->getSpeed();
             	DrawText(TextFormat("Chunk: %d %d\nPosition: \n%.2f \n%.2f\nSpeed: %02f", hitBoxes[0].getChunk().x, hitBoxes[0].getChunk().y, globals::player->transform.translation.x, globals::player->transform.translation.y, speed), 10, 100, 20, (prevSpeed < speed) ? GREEN : RED);
+           		prevSpeed = speed;
             }
             console.draw();
         EndDrawing();
@@ -179,7 +188,7 @@ int main(int argc, char **argv) {
     R3D_UnloadCubemap(cubemap);
     R3D_Close();
 
-    dWorldDestroy(world);
+    //dWorldDestroy(world);
 
     CloseAudioDevice();
     CloseWindow();

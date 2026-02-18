@@ -4,6 +4,7 @@
 #include <math.h>
 #include <raylib.h>
 #include <glm/glm.hpp>
+#include "r3d/r3d_kinematics.h"
 #include "utils.hpp"
 
 using namespace glm;
@@ -35,6 +36,8 @@ struct CMoveData {
 	float airAcceleration;
 };
 
+
+
 class Player {
 	float mSense = 0;
 	public:
@@ -58,6 +61,13 @@ class Player {
 	bool m_bCrouchRequested;
 	bool m_bSprinting;
 	float distanceWalked;
+	R3D_Mesh capsMesh = R3D_GenMeshCapsule(view.viewHeight/3, view.viewHeight, 64, 32);
+
+	struct {
+		Ray colray;
+		RayCollision groundCollision;
+		Vector3 colPos;
+	} groundCheck;
 
 	void updatePlayer(Camera3D &camera);
 	void updateConvars();
@@ -69,9 +79,11 @@ class Player {
 	void airMove();
 	void airAccelerate(vec3 &wishdir, float wishSpeed, float accel);
 	void addGravity();
+	void updateGround();
 	bool canAccelerate();
 	float getSpeed() const;
 	Vector3 getPos() const;
+
 
 	Player();
 	~Player() = default;

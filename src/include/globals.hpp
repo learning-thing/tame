@@ -31,7 +31,8 @@ namespace globals {
 	static char lastKey;
 
 	inline Player *player;
-	static R3D_Model model;
+	inline R3D_Model model;
+	inline Matrix modelMatrix = MatrixIdentity();
 
 	inline void togglePause() {
 		paused = !paused;

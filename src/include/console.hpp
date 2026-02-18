@@ -128,7 +128,7 @@ public:
                 }
             }
             globals::consoleActive = !hidden;
-        } else if (globals::keyPressed(globals::KEY_CONSOLE_TOGGLE)) {
+        } else if (IsKeyPressed(KEY_T)) {
             hidden = false;
         }
     }

@@ -1,4 +1,5 @@
-var viewHeight = 10.0;
+//Before scaling down
+var viewHeight = 0.9;
 var maxSpeed = 3.0;
 var gravity = 3.6;
 var acceleration = 10.0;

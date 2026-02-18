@@ -2,6 +2,7 @@
 #include "player.hpp"
 #include "r3d/r3d_model.h"
 #include <cstdint>
+#include <glm/fwd.hpp>
 #include <raylib.h>
 #include <r3d/r3d.h>
 
@@ -58,7 +59,7 @@ namespace globals {
 		return tickKeys & key && !(prevTickKeys & key);
 	}
 
-	inline bool tick() {
+	inline uint8 tick() {
 		if (tickTime >= 1.0f/TICKRATE) return true;
 		return false;
 	}

@@ -1,0 +1,21 @@
+id: org.flatpak.tame
+runtime: org.freedesktop.Platform
+runtime-version: "25.08"
+sdk: org.freedesktop.Sdk
+command: tame
+modules:
+    - name: tame
+      buildsystem: simple
+      build-options:
+          build-args:
+              - --share=network
+      build-commands:
+          - ls
+          - cmake -B build -G "Ninja"
+          - cd raylib && ninja
+          - install -Dm755 build/tame /app/bin/tame
+      sources:
+          - type: git
+            url: https://github.com/learning-thing/tame
+            commit: master
+            dest: .

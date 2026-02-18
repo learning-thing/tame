@@ -46,16 +46,11 @@ void Player::updatePlayer(Camera3D &camera) {
 
 void Player::viewUpdate(Camera3D &camera) {
 	if (globals::paused) return;
-	//mSense = convars::getFloat("mSense");
-	//float Sense = convars::getFloat("mSense");
-	//print("sensitivity: ", Sense);
-	//Vector2 mDelta = GetMouseDelta()*0.005f*(int)(!globals::paused);
 	Vector2 mDelta = GetMouseDelta();
 	view.rotation += vec2(mDelta.x, mDelta.y)*mSense;
 	if (view.rotation.y > 3.14f) { view.rotation.y = 3.14f; }
 	if (view.rotation.y < 0.1) { view.rotation.y = 0.1; }
 	vec2 viewRotation = view.rotation + view.m_vecFxViewOffset_t*0.02f;
-	//io::print((ZString)textFormat("View rotation: %f\n", view.rotation.y));
 
 	if (m_bSliding) {
 		view.offset.y = view.viewHeight/10;
@@ -114,12 +109,7 @@ void Player::fullWalkMove() {
 }
 
 void Player::walkMove() {
-	//vec3 wishDir;
 	vec3 wishVel = vec3(0);
-	//float spd;
-	//float fmove, smove;
-	//int wishSpeed = 320;
-	//vec3 forward, right, up;
 	vec3 strafeDir = glm::cross(view.lookDir, vec3(0, 1, 0));
 
 	if (!globals::consoleActive) {
@@ -268,6 +258,8 @@ void Player::updateGround() {
 		if (groundCheck.groundCollision.point.y >= transform.translation.y) {
 			m_bOnGround = true;
 			transform.translation.y = groundCheck.groundCollision.point.y;
+			//Bounce
+			mv.m_vecVelocity += normalize(vec3(groundCheck.groundCollision.normal.x, groundCheck.groundCollision.normal.y, groundCheck.groundCollision.normal.z))*getSpeed();
 			return;
 		}
 		m_bOnGround = false;

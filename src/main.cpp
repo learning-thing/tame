@@ -1,23 +1,17 @@
 #include "collision.hpp"
 #include "convars.hpp"
 #include "globals.hpp"
-#include "ode/collision.h"
-#include "ode/common.h"
-#include "ode/objects.h"
-#include "ode/odecpp.h"
 #include "r3d/r3d_ambient_map.h"
 #include "r3d/r3d_draw.h"
 #include "r3d/r3d_environment.h"
 #include "r3d/r3d_importer.h"
 #include "r3d/r3d_lighting.h"
-#include "r3d/r3d_material.h"
 #include "r3d/r3d_mesh.h"
 #include <atomic>
 #include <bits/chrono.h>
 #include <cstdio>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/geometric.hpp>
-#include <iostream>
 #include <r3d/r3d.h>
 #include <raylib.h>
 #include <raymath.h>
@@ -26,7 +20,6 @@
 #include "utils.hpp"
 #include "player.hpp"
 #include "console.hpp"
-#include "ode/ode.h"
 #include <thread>
 
 using namespace std::chrono_literals;

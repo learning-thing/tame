@@ -30,14 +30,30 @@ void Player::updatePlayer(Camera3D &camera) {
 	}
 
 	fullWalkMove();
-	transform.translation += mv.m_vecVelocity * globals::tickTime*10.0f;
+	transform.translation += mv.m_vecVelocity * globals::tickTime;
 
 	updateGround();
 
 	//Add addGravity
 	if (!m_bOnGround) { addGravity();}
 	else {
-		if (m_bOnGround && !m_bWasOnGround)  PlaySound(mv.groundHitSound);
+		if (m_bOnGround && !m_bWasOnGround) {//If hitting the ground
+			vec3 groundNormal = vec3(groundCheck.groundCollision.normal.x, groundCheck.groundCollision.normal.y, groundCheck.groundCollision.normal.z);
+			if (m_bSliding) {
+				//Get the slide vec
+				/*
+				const vec3 right = glm::cross(groundNormal, vec3(0, 1, 0));
+				const vec3 slideVec = glm::cross(groundNormal, right);
+				mv.m_vecVelocity = normalize(slideVec)*getSpeed();
+				 */
+				//Bounce
+				std::cout << dot(groundNormal, vec3(0, 1, 0)) << "\n";
+				mv.m_vecVelocity += normalize(groundNormal)*length(mv.m_vecVelocity)*(1-dot(groundNormal, vec3(0, 1, 0)));
+			} else {
+
+			}
+			PlaySound(mv.groundHitSound);
+		}
 		//transform.translation.y += 1;
 		mv.m_vecVelocity.y = 0;
 	}
@@ -53,7 +69,7 @@ void Player::viewUpdate(Camera3D &camera) {
 	vec2 viewRotation = view.rotation + view.m_vecFxViewOffset_t*0.02f;
 
 	if (m_bSliding) {
-		view.offset.y = view.viewHeight/10;
+		view.offset.y = view.viewHeight/4;
 	} else {
 		view.offset.y = view.viewHeight;
 	}
@@ -254,12 +270,10 @@ void Player::updateGround() {
 
 	//std::cout << groundCheck.groundCollision.distance << "\n";
 	if (groundCheck.groundCollision.hit) {
-		print(groundCheck.groundCollision.point);
+		//print(groundCheck.groundCollision.point);
 		if (groundCheck.groundCollision.point.y >= transform.translation.y) {
 			m_bOnGround = true;
 			transform.translation.y = groundCheck.groundCollision.point.y;
-			//Bounce
-			mv.m_vecVelocity += normalize(vec3(groundCheck.groundCollision.normal.x, groundCheck.groundCollision.normal.y, groundCheck.groundCollision.normal.z))*getSpeed();
 			return;
 		}
 		m_bOnGround = false;

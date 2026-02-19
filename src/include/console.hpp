@@ -99,7 +99,10 @@ public:
             const char newKey = GetCharPressed();
             if (newKey != 0) cmdline += newKey;
 
-            if (IsKeyPressed(KEY_ESCAPE)) hidden = true;
+            if (IsKeyPressed(KEY_ESCAPE)) {
+            	hidden = true;
+            	globals::togglePause();
+            }
 
             if (IsKeyPressed(KEY_BACKSPACE) && !cmdline.empty()) cmdline.pop_back();
 

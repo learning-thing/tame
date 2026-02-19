@@ -48,10 +48,12 @@ namespace globals {
 		frametime = GetFrameTime();
 		iTime += frametime;
 		tickTime+=frametime;
-		if (IsKeyPressed(KEY_ESCAPE) && !consoleActive) togglePause();
+		if (IsKeyPressed(KEY_ESCAPE)) {
+			togglePause();
+		}
 
 		tickKeys |= KEY_JUMP * IsKeyDown(KEY_SPACE);
-		tickKeys |= KEY_CONSOLE_TOGGLE * IsKeyDown(KEY_T);
+		tickKeys |= KEY_CONSOLE_TOGGLE * IsKeyPressed(KEY_T);
 	}
 
 	inline bool keyPressed(tickedKeys key) {

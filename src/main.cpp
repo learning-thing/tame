@@ -24,17 +24,14 @@
 
 using namespace std::chrono_literals;
 
-// Flag, um den Thread sauber zu beenden
 std::atomic<bool> gameRunning(true);
 
 void PhysicsTickLoop(Player* player, Camera3D& camera, tArray<hitBox>& hitBoxes, Console& console) {
-    // 60 Ticks pro Sekunde = ~16.67ms pro Tick
     const auto tickrate = 8ms;
 
     while (gameRunning) {
         auto startTime = std::chrono::steady_clock::now();
 
-        // Hier wird die Logik ausgeführt, die vorher in globals::tick() stand
         if (!globals::paused) {
             player->updatePlayer(camera);
             hitBoxes[0].update();
@@ -44,7 +41,7 @@ void PhysicsTickLoop(Player* player, Camera3D& camera, tArray<hitBox>& hitBoxes,
         auto endTime = std::chrono::steady_clock::now();
         auto duration = endTime - startTime;
 
-        // Warten, bis der nächste Tick fällig ist
+        // wait for nex tic
         if (duration < tickrate) {
             std::this_thread::sleep_for(tickrate - duration);
         }
